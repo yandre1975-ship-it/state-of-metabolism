@@ -638,16 +638,20 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
         {/* TTS toggle */}
         <button
           onClick={() => {
+            if (isSpeaking) {
+              stopSpeaking();
+              return;
+            }
             setAutoSpeak(prev => {
               if (prev) synthRef.current.cancel();
               return !prev;
             });
           }}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
-            ${autoSpeak ? 'bg-emerald-500 text-white' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
-          title={autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
+            ${isSpeaking ? 'bg-red-500 text-white animate-pulse' : autoSpeak ? 'bg-emerald-500 text-white' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title={isSpeaking ? 'Остановить озвучку' : autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
         >
-          {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          {isSpeaking ? <Square size={14} /> : autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
         </button>
         {/* Voice settings button */}
         <button
