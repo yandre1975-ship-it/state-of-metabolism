@@ -1,11 +1,39 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { getTodayEntry, getProfile, getStatus } from '@/lib/storage';
+import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed } from 'lucide-react';
+import { getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, type FoodItem } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
 type AgentRole = 'coach' | 'nutrition' | 'training' | 'risk' | 'reminder';
 
 type Msg = { role: 'user' | 'assistant'; content: string; agent?: AgentRole };
+
+// Parse food items from nutritionist markdown response
+function parseFoodFromMessage(text: string): { name: string; grams: number; calories: number; protein: number; carbs: number; fat: number }[] {
+  const items: { name: string; grams: number; calories: number; protein: number; carbs: number; fat: number }[] = [];
+  // Match patterns like: **Куриная грудка** (150г) — 165 ккал, Б25, У0, Ж3
+  // Or: Куриная грудка — 150г, 165 ккал
+  const lines = text.split('\n');
+  for (const line of lines) {
+    // Pattern: name (Xг) — Y ккал, БZ, УW, ЖV
+    const match1 = line.match(/\*{0,2}([^*\n(]+?)\*{0,2}\s*\((\d+)\s*г\)\s*[—–-]\s*(\d+)\s*ккал[\s,]*Б\s*(\d+)[\s,]*У\s*(\d+)[\s,]*Ж\s*(\d+)/i);
+    if (match1) {
+      items.push({ name: match1[1].trim(), grams: +match1[2], calories: +match1[3], protein: +match1[4], carbs: +match1[5], fat: +match1[6] });
+      continue;
+    }
+    // Pattern: name — Xг, Y ккал, БZ
+    const match2 = line.match(/\*{0,2}([^*\n—–-]+?)\*{0,2}\s*[—–-]\s*(\d+)\s*г[\s,]*(\d+)\s*ккал/i);
+    if (match2) {
+      const proteinM = line.match(/Б\s*(\d+)/i);
+      const carbsM = line.match(/У\s*(\d+)/i);
+      const fatM = line.match(/Ж\s*(\d+)/i);
+      items.push({
+        name: match2[1].trim(), grams: +match2[2], calories: +match2[3],
+        protein: proteinM ? +proteinM[1] : 0, carbs: carbsM ? +carbsM[1] : 0, fat: fatM ? +fatM[1] : 0,
+      });
+    }
+  }
+  return items;
+}
 
 const AGENT_META: Record<AgentRole, { label: string; emoji: string; icon: typeof Brain; color: string }> = {
   coach:     { label: 'Коуч',           emoji: '🧠', icon: Brain,         color: 'text-blue-500' },
