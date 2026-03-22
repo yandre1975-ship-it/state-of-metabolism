@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Plus, Trash2, History, Crown, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Trash2, History, Crown, Lightbulb, ChevronDown, ChevronUp, Coffee } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
