@@ -6,6 +6,7 @@ export interface DailyEntry {
   coffee: number;
   protein: boolean;
   activity: number;
+  water: number; // glasses of water (250ml each)
 }
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
