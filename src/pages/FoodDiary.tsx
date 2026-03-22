@@ -15,6 +15,9 @@ export default function FoodDiary() {
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
   const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+  const [suggestions, setSuggestions] = useState<FoodDBItem[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestRef = useRef<HTMLDivElement>(null);
 
   const targets = calcMacroTargets(entry.weight, entry.activity);
 
