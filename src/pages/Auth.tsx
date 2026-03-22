@@ -16,26 +16,30 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
+      // Demo mode: sign in with a fixed demo account
+      const demoEmail = 'demo@healthoperator.app';
+      const demoPassword = 'demo123456';
+
+      // Try to sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: demoPassword,
+      });
+
+      if (signInError) {
+        // If sign in fails, create the demo account
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: demoEmail,
+          password: demoPassword,
           options: {
-            data: { name: name.trim() },
+            data: { name: name.trim() || 'Пользователь' },
             emailRedirectTo: window.location.origin,
           },
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
       }
     } catch (err: any) {
-      setError(err.message === 'Invalid login credentials'
-        ? 'Неверный email или пароль'
-        : err.message === 'User already registered'
-        ? 'Этот email уже зарегистрирован'
-        : err.message || 'Произошла ошибка');
+      setError(err.message || 'Произошла ошибка');
     }
     setLoading(false);
   };
