@@ -28,10 +28,15 @@ export default function FoodDiary() {
   const profile = getProfile();
   const targets = calcMacroTargets(entry.weight, entry.activity, profile);
 
+  const exercises = getTodayExercises();
+  const burned = Math.round(calcBurnedCalories(exercises));
+
   const totals = food.items.reduce(
     (acc, i) => ({ cal: acc.cal + i.calories, p: acc.p + i.protein, c: acc.c + i.carbs, f: acc.f + i.fat }),
     { cal: 0, p: 0, c: 0, f: 0 }
   );
+
+  const netCalories = totals.cal - burned;
 
   const save = (items: FoodItem[]) => {
     const next = { ...food, items };
