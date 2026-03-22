@@ -230,6 +230,7 @@ export function calcMacroTargets(weight: number | null, activityMin: number, pro
   const age = profile?.age || 30;
   const height = profile?.height || 170;
   const goal = profile?.goal || 'lose';
+  const actLevel = profile?.activityLevel || 'light';
 
   // Mifflin-St Jeor BMR
   let bmr: number;
@@ -239,12 +240,21 @@ export function calcMacroTargets(weight: number | null, activityMin: number, pro
     bmr = 10 * w + 6.25 * height - 5 * age + 5;
   }
 
-  // Activity calories
+  // Activity multiplier based on profile activity level
+  const actMultipliers: Record<string, number> = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+  };
+  const tdee = bmr * (actMultipliers[actLevel] || 1.375);
+
+  // Additional activity calories from today's tracked minutes
   const activityCal = activityMin * 5;
 
   // Goal-based deficit/surplus
   const goalAdjust = goal === 'lose' ? -400 : goal === 'gain' ? 300 : 0;
-  let totalCal = Math.round(bmr + activityCal + goalAdjust);
+  let totalCal = Math.round(tdee + activityCal + goalAdjust);
 
   // Macro split defaults: 30P / 40C / 30F
   let pPct = 0.3, cPct = 0.4, fPct = 0.3;
