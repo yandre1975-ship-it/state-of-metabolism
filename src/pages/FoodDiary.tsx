@@ -13,7 +13,14 @@ const mealSlots = [
 ];
 
 export default function FoodDiary() {
-  const entry = getTodayEntry();
+  const [entry, setEntry] = useState<DailyEntry>(getTodayEntry);
+  const update = (patch: Partial<DailyEntry>) => {
+    setEntry(prev => {
+      const next = { ...prev, ...patch };
+      saveEntry(next);
+      return next;
+    });
+  };
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
   const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
