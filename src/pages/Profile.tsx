@@ -12,6 +12,9 @@ const conditionsList: { id: HealthCondition; label: string; description: string 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const [saved, setSaved] = useState(false);
+  const [ageStr, setAgeStr] = useState(String(profile.age));
+  const [heightStr, setHeightStr] = useState(String(profile.height));
+  const [weightStr, setWeightStr] = useState(String(profile.weight));
 
   const update = (patch: Partial<UserProfile>) => {
     const next = { ...profile, ...patch };
@@ -59,23 +62,26 @@ export default function Profile() {
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl bg-card border p-4 shadow-sm">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Возраст</span>
-          <input type="number" inputMode="numeric" value={profile.age}
-            onChange={e => update({ age: Math.max(10, Math.min(120, Number(e.target.value) || 0)) })}
-            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1" />
+          <input type="number" inputMode="numeric" value={ageStr}
+            onChange={e => setAgeStr(e.target.value)}
+            onBlur={() => { const v = Math.max(10, Math.min(120, Number(ageStr) || 30)); setAgeStr(String(v)); update({ age: v }); }}
+            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
           <span className="text-[11px] text-muted-foreground">лет</span>
         </div>
         <div className="rounded-2xl bg-card border p-4 shadow-sm">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Рост</span>
-          <input type="number" inputMode="numeric" value={profile.height}
-            onChange={e => update({ height: Math.max(100, Math.min(250, Number(e.target.value) || 0)) })}
-            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1" />
+          <input type="number" inputMode="numeric" value={heightStr}
+            onChange={e => setHeightStr(e.target.value)}
+            onBlur={() => { const v = Math.max(100, Math.min(250, Number(heightStr) || 170)); setHeightStr(String(v)); update({ height: v }); }}
+            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
           <span className="text-[11px] text-muted-foreground">см</span>
         </div>
         <div className="rounded-2xl bg-card border p-4 shadow-sm">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Вес</span>
-          <input type="number" inputMode="decimal" step="0.1" value={profile.weight}
-            onChange={e => update({ weight: Math.max(30, Math.min(300, Number(e.target.value) || 0)) })}
-            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1" />
+          <input type="number" inputMode="decimal" step="0.1" value={weightStr}
+            onChange={e => setWeightStr(e.target.value)}
+            onBlur={() => { const v = Math.max(30, Math.min(300, Number(weightStr) || 75)); setWeightStr(String(v)); update({ weight: v }); }}
+            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
           <span className="text-[11px] text-muted-foreground">кг</span>
         </div>
       </div>
