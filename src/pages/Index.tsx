@@ -7,7 +7,6 @@ import { migrateLocalToCloud, getCloudProfile } from '@/lib/cloudStorage';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import FoodDiary from './FoodDiary';
-import HistoryDiary from './HistoryDiary';
 import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
 import AIChat from './AIChat';
@@ -91,8 +90,8 @@ export default function Index() {
 
   const renderTab = () => {
     switch (tab) {
-      case 'dashboard': return <><Dashboard /><div className="mt-6"><FoodDiary /></div></>;
-      case 'food': return <HistoryDiary />;
+      case 'dashboard': return <Dashboard />;
+      case 'food': return <FoodDiary />;
       case 'chat': return <AIChat onNavigateToFood={() => setTab('food')} />;
       case 'weekly':
         return canAccess('weeklyReview')
