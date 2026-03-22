@@ -111,6 +111,7 @@ export default function Profile() {
               <span className="text-[10px] opacity-70">{opt.desc}</span>
             </button>
           ))}
+        </div>
       </div>
 
       {/* Target Weight & Date */}
