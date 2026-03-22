@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getProfile, saveProfile, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
-import { Check, User } from 'lucide-react';
+import { getProfile, saveProfile, calcDailyDeficit, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
+import { Check, User, Target } from 'lucide-react';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
   { id: 'insulin_resistance', label: 'Инсулинорезистентность', description: 'Снижает углеводы, увеличивает белок и жиры' },

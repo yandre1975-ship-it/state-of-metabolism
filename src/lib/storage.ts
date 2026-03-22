@@ -18,6 +18,24 @@ export interface UserProfile {
   weight: number; // kg
   goal: Goal;
   conditions: HealthCondition[];
+  targetWeight?: number; // kg
+  targetDate?: string; // YYYY-MM-DD
+}
+
+/**
+ * Calculate daily calorie deficit needed to reach target weight by target date.
+ * 1 kg of fat ≈ 7700 kcal.
+ */
+export function calcDailyDeficit(profile: UserProfile): { kgToLose: number; daysLeft: number; dailyDeficit: number } | null {
+  if (!profile.targetWeight || !profile.targetDate) return null;
+  const kgToLose = profile.weight - profile.targetWeight;
+  if (kgToLose <= 0) return null;
+  const today = new Date();
+  const target = new Date(profile.targetDate);
+  const daysLeft = Math.max(1, Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  const totalCal = kgToLose * 7700;
+  const dailyDeficit = Math.round(totalCal / daysLeft);
+  return { kgToLose: Math.round(kgToLose * 10) / 10, daysLeft, dailyDeficit };
 }
 
 const PROFILE_KEY = 'metabolic_profile';
