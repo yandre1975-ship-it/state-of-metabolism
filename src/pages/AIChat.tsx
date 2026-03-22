@@ -401,19 +401,50 @@ export default function AIChat() {
       )}
 
       {/* Input */}
-      <div className="flex gap-2 pt-3 border-t">
+      <div className="flex gap-2 pt-3 border-t items-center">
+        {/* TTS toggle */}
+        <button
+          onClick={() => {
+            setAutoSpeak(prev => {
+              if (prev) synthRef.current.cancel();
+              return !prev;
+            });
+          }}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
+            ${autoSpeak ? 'bg-emerald-500 text-white' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title={autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
+        >
+          {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
+
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
-          placeholder="Спросите что-нибудь..."
+          placeholder={isListening ? 'Говорите...' : 'Спросите что-нибудь...'}
           disabled={isLoading}
-          className="flex-1 bg-card border rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50 disabled:opacity-50"
+          className={`flex-1 bg-card border rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50 disabled:opacity-50
+            ${isListening ? 'border-red-400 ring-2 ring-red-400/30' : ''}`}
         />
+
+        {/* Mic button */}
+        <button
+          onClick={isListening ? stopListening : startListening}
+          disabled={isLoading}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
+            ${isListening
+              ? 'bg-red-500 text-white animate-pulse'
+              : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title={isListening ? 'Остановить запись' : 'Голосовой ввод'}
+        >
+          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+        </button>
+
+        {/* Send button */}
         <button
           onClick={() => sendMessage(input)}
           disabled={!input.trim() || isLoading}
-          className="w-11 h-11 rounded-2xl bg-foreground text-background flex items-center justify-center active:scale-95 transition-all disabled:opacity-40"
+          className="w-10 h-10 rounded-xl bg-foreground text-background flex items-center justify-center active:scale-95 transition-all disabled:opacity-40 flex-shrink-0"
         >
           <Send size={16} />
         </button>
