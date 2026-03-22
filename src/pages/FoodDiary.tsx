@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, History, Crown, Lightbulb, ChevronDown, ChevronUp, Coffee } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
-import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem } from '@/lib/storage';
+import { getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import { canAccess } from '@/lib/premium';
 import { generateRecommendations } from '@/lib/recommendations';
