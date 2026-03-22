@@ -270,3 +270,21 @@ export function saveExercises(day: DailyExercises) {
     localStorage.setItem(EXERCISE_KEY, JSON.stringify(all));
   } catch {}
 }
+
+/**
+ * Estimate calories burned from completed exercises.
+ * Rough estimates: ~0.5 kcal per rep, ~8 kcal per minute for bodyweight exercises.
+ */
+export function calcBurnedCalories(exercises: DailyExercises): number {
+  return exercises.items
+    .filter(i => i.done)
+    .reduce((total, ex) => {
+      if (ex.sets && ex.reps) {
+        return total + ex.sets * ex.reps * 0.5;
+      }
+      if (ex.minutes) {
+        return total + ex.minutes * 8;
+      }
+      return total;
+    }, 0);
+}

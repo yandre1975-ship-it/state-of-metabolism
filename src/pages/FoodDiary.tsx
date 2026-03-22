@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Plus, Trash2, History } from 'lucide-react';
-import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, type FoodItem } from '@/lib/storage';
+import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import FoodHistory from './FoodHistory';
 import ExerciseTracker from '@/components/ExerciseTracker';
@@ -28,10 +28,15 @@ export default function FoodDiary() {
   const profile = getProfile();
   const targets = calcMacroTargets(entry.weight, entry.activity, profile);
 
+  const exercises = getTodayExercises();
+  const burned = Math.round(calcBurnedCalories(exercises));
+
   const totals = food.items.reduce(
     (acc, i) => ({ cal: acc.cal + i.calories, p: acc.p + i.protein, c: acc.c + i.carbs, f: acc.f + i.fat }),
     { cal: 0, p: 0, c: 0, f: 0 }
   );
+
+  const netCalories = totals.cal - burned;
 
   const save = (items: FoodItem[]) => {
     const next = { ...food, items };
@@ -74,13 +79,19 @@ export default function FoodDiary() {
           </button>
         </div>
         <div className="grid grid-cols-4 gap-3">
-          <MacroRing label="Ккал" current={totals.cal} target={targets.calories} unit="" color="var(--foreground)" />
+          <MacroRing label="Нетто" current={netCalories} target={targets.calories} unit="" color="var(--foreground)" />
           <MacroRing label="Белки" current={totals.p} target={targets.protein} unit="г" color="hsl(var(--status-green))" />
           <MacroRing label="Углев." current={totals.c} target={targets.carbs} unit="г" color="hsl(var(--status-yellow))" />
           <MacroRing label="Жиры" current={totals.f} target={targets.fat} unit="г" color="hsl(var(--status-red))" />
         </div>
+        {/* Calorie breakdown */}
+        <div className="flex items-center justify-center gap-4 mt-3 text-[11px] text-muted-foreground tabular-nums">
+          <span>Съедено: {totals.cal} ккал</span>
+          <span>—</span>
+          <span className="text-status-green">Сожжено: {burned} ккал</span>
+        </div>
         {!entry.weight && (
-          <p className="text-xs text-muted-foreground mt-3 text-center">
+          <p className="text-xs text-muted-foreground mt-2 text-center">
             Укажите вес на вкладке «Сегодня» для точного расчёта
           </p>
         )}
