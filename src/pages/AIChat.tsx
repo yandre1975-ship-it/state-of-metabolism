@@ -120,6 +120,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(() => {
     try { return parseFloat(localStorage.getItem('tts_rate') || '1.05'); } catch { return 1.05; }
   });
