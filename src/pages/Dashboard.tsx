@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle } from 'lucide-react';
+import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets } from 'lucide-react';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
   green: { bg: 'bg-status-green-bg', border: 'border-status-green/30', text: 'text-status-green', icon: '🔥' },
@@ -136,6 +136,34 @@ export default function Dashboard() {
           {entry.protein ? '✓ Да' : 'Нет'}
         </button>
       </Card>
+
+      {/* Water Tracker */}
+      {(() => {
+        const waterNorm = Math.round((profile.weight || 75) * 30 / 250); // 30ml per kg, 250ml per glass
+        const glasses = entry.water || 0;
+        const pct = Math.min(100, Math.round((glasses / waterNorm) * 100));
+        return (
+          <Card icon={<Droplets size={16} />} label={`Вода: ${glasses} / ${waterNorm} стаканов`}>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <button onClick={() => update({ water: Math.max(0, glasses - 1) })}
+                  className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground font-bold text-lg transition-all active:scale-95 hover:bg-secondary/70">−</button>
+                <div className="flex-1">
+                  <div className="h-3 rounded-full bg-secondary overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-300"
+                      style={{ width: `${pct}%`, backgroundColor: pct >= 100 ? 'hsl(var(--status-green))' : pct >= 60 ? 'hsl(var(--status-yellow))' : 'hsl(210, 80%, 55%)' }} />
+                  </div>
+                </div>
+                <button onClick={() => update({ water: glasses + 1 })}
+                  className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground font-bold text-lg transition-all active:scale-95 hover:bg-secondary/70">+</button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                {pct >= 100 ? '✅ Норма выполнена!' : `Рекомендация: ${waterNorm} стаканов (${Math.round((profile.weight || 75) * 30 / 1000)} л) в день`}
+              </p>
+            </div>
+          </Card>
+        );
+      })()}
 
       {/* Safety */}
       <div className="rounded-2xl bg-secondary/50 p-4">

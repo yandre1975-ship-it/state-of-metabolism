@@ -6,6 +6,7 @@ export interface DailyEntry {
   coffee: number;
   protein: boolean;
   activity: number;
+  water: number; // glasses of water (250ml each)
 }
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
@@ -122,7 +123,7 @@ export function getTodayEntry(): DailyEntry {
   const today = getToday();
   const entries = getEntries();
   return entries.find(e => e.date === today) || {
-    date: today, weight: null, hunger: 2, energy: 3, coffee: 0, protein: false, activity: 0,
+    date: today, weight: null, hunger: 2, energy: 3, coffee: 0, protein: false, activity: 0, water: 0,
   };
 }
 
@@ -142,7 +143,7 @@ export function getLast7Days(): DailyEntry[] {
     dates.push(d.toISOString().slice(0, 10));
   }
   return dates.map(date => entries.find(e => e.date === date) || {
-    date, weight: null, hunger: 0, energy: 0, coffee: 0, protein: false, activity: 0,
+    date, weight: null, hunger: 0, energy: 0, coffee: 0, protein: false, activity: 0, water: 0,
   });
 }
 

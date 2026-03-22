@@ -154,7 +154,7 @@ function getLastNDays(entries: DailyEntry[], n: number): DailyEntry[] {
     dates.push(d.toISOString().slice(0, 10));
   }
   return dates.map(date => entries.find(e => e.date === date) || {
-    date, weight: null, hunger: 0, energy: 0, coffee: 0, protein: false, activity: 0,
+    date, weight: null, hunger: 0, energy: 0, coffee: 0, protein: false, activity: 0, water: 0,
   });
 }
 
