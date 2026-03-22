@@ -176,7 +176,7 @@ function routeToAgent(message: string, context: any): AgentRole {
   if (nutritionKeywords.some(k => lower.includes(k))) return "nutrition";
 
   // Training keywords
-  const trainingKeywords = ["трениров", "упражнен", "спорт", "физ", "ходьб", "бег", "приседан", "отжиман", "планк", "активност", "шаг", "нагрузк", "разминк", "растяжк", "мышц", "кардио", "сжеч", "сжига"];
+  const trainingKeywords = ["трениров", "упражнен", "спорт", "физ", "ходьб", "бег", "приседан", "отжиман", "планк", "активност", "шаг", "нагрузк", "разминк", "растяжк", "мышц", "кардио", "сжеч", "сжига", "программ", "на недел"];
   if (trainingKeywords.some(k => lower.includes(k))) return "training";
 
   // Reminder/plan keywords
