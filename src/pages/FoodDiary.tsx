@@ -85,14 +85,10 @@ export default function FoodDiary() {
     save([...food.items, item]);
   };
 
-  const remove = (id: string) => save(food.items.filter(i => i.id !== id));
-
-  if (showHistory) return <FoodHistory onBack={() => setShowHistory(false)} />;
+  // History is now in a separate tab (HistoryDiary)
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* AI Agent Insights */}
-      <AgentInsightBanner tab="food" />
 
       {/* Macro Summary */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
