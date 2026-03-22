@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets } from 'lucide-react';
+import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
   green: { bg: 'bg-status-green-bg', border: 'border-status-green/30', text: 'text-status-green', icon: '🔥' },
@@ -183,6 +183,70 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground text-center">
                 {pct >= 100 ? '✅ Норма выполнена!' : `Рекомендация: ${waterNormL} л (${waterNormGlasses} стаканов) в день`}
               </p>
+            </div>
+          </Card>
+        );
+      })()}
+
+      {/* Sleep Tracker */}
+      {(() => {
+        const hours = entry.sleepHours || 0;
+        const quality = entry.sleepQuality || 3;
+        const qualityLabels = ['', '😫 Ужасно', '😕 Плохо', '😐 Нормально', '😊 Хорошо', '😴 Отлично'];
+        const getSleepTip = () => {
+          if (hours === 0) return '💤 Введите количество часов сна';
+          if (hours < 6) return '⚠️ Недосып повышает кортизол и усиливает голод. Старайтесь спать 7–8 часов.';
+          if (hours < 7) return '💡 Почти норма! Попробуйте ложиться на 30 минут раньше.';
+          if (hours <= 9) return '✅ Отличная продолжительность сна для восстановления и метаболизма.';
+          return '💡 Избыток сна может говорить об усталости. Следите за качеством.';
+        };
+        const getQualityTip = () => {
+          if (quality <= 2) return 'Попробуйте: тёмная комната, без экранов за час до сна, прохладная температура.';
+          if (quality === 3) return 'Для улучшения: регулярный режим, магний вечером, лёгкая растяжка.';
+          return '';
+        };
+        return (
+          <Card icon={<Moon size={16} />} label={`Сон: ${hours > 0 ? `${hours} ч` : '—'}`}>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-12">Часы:</span>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  value={hours > 0 ? hours : ''}
+                  placeholder="0"
+                  onChange={e => {
+                    const val = parseFloat(e.target.value);
+                    update({ sleepHours: !isNaN(val) && val >= 0 ? Math.min(24, val) : 0 });
+                  }}
+                  className="w-16 bg-secondary text-center text-sm font-medium rounded-lg py-1.5 outline-none focus:ring-2 focus:ring-ring tabular-nums"
+                />
+                <div className="flex-1 flex gap-1">
+                  {[6, 7, 8, 9].map(h => (
+                    <button key={h} onClick={() => update({ sleepHours: h })}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95
+                        ${hours === h ? 'bg-foreground text-background shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+                      {h}ч
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-muted-foreground">Качество:</span>
+                  <span className="text-xs font-medium">{qualityLabels[quality]}</span>
+                </div>
+                <input type="range" min={1} max={5} value={quality}
+                  onChange={e => update({ sleepQuality: Number(e.target.value) })}
+                  className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+                  <span>Плохо</span><span>Отлично</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{getSleepTip()}</p>
+              {getQualityTip() && <p className="text-xs text-muted-foreground leading-relaxed">💡 {getQualityTip()}</p>}
             </div>
           </Card>
         );

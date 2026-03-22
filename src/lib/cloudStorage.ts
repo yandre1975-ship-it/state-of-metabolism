@@ -57,6 +57,8 @@ export async function getCloudEntries(): Promise<DailyEntry[]> {
     protein: d.protein,
     activity: d.activity,
     water: (d as any).water ?? 0,
+    sleepHours: (d as any).sleepHours ?? 0,
+    sleepQuality: (d as any).sleepQuality ?? 3,
   }));
 }
 
