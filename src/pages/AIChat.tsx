@@ -87,6 +87,62 @@ export default function AIChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const greetedRef = useRef(false);
 
+  // Voice state
+  const [isListening, setIsListening] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef(window.speechSynthesis);
+
+  const speakText = useCallback((text: string) => {
+    if (!autoSpeak) return;
+    synthRef.current.cancel();
+    // Strip markdown
+    const clean = text.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 1.05;
+    utterance.pitch = 1;
+    // Try to pick a Russian voice
+    const voices = synthRef.current.getVoices();
+    const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
+    if (ruVoice) utterance.voice = ruVoice;
+    synthRef.current.speak(utterance);
+  }, [autoSpeak]);
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setError('Голосовой ввод не поддерживается в этом браузере');
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(transcript);
+      if (event.results[0]?.isFinal) {
+        setIsListening(false);
+      }
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, []);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }, []);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
