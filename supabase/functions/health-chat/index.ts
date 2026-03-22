@@ -208,12 +208,17 @@ serve(async (req) => {
     if (context) {
       systemContent += `\n\nТекущие данные пользователя:
 - Имя: ${context.name || "не указано"}
+- Пол: ${context.sex === "female" ? "женский" : "мужской"}
+- Возраст: ${context.age || "не указан"} лет
+- Рост: ${context.height || "не указан"} см
 - Вес: ${context.weight || "не указан"} кг
+- Целевой вес: ${context.targetWeight || "не указан"} кг
+- Уровень активности: ${context.activityLevel || "не указан"}
 - Голод: ${context.hunger}/5
 - Энергия: ${context.energy}/5
 - Кофе: ${context.coffee} чашек
 - Белок: ${context.protein ? "да" : "нет"}
-- Активность: ${context.activity} мин
+- Активность сегодня: ${context.activity} мин
 - Цель: ${context.goal || "не указана"}
 - Сон: ${context.sleepHours || "не указан"} ч (качество: ${context.sleepQuality || "не указано"}/5)
 - Вода: ${context.waterLiters || "не указано"} л`;
