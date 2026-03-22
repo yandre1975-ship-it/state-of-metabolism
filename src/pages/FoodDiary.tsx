@@ -14,7 +14,9 @@ export default function FoodDiary() {
   const entry = getTodayEntry();
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
-  const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+  const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
+  // Store the "per 100g" base when a DB item is selected, so we can recalculate
+  const [basePer100, setBasePer100] = useState<FoodDBItem | null>(null);
   const [suggestions, setSuggestions] = useState<FoodDBItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestRef = useRef<HTMLDivElement>(null);
