@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2 } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2, BookOpen } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
 import { useAuth } from '@/contexts/AuthContext';
