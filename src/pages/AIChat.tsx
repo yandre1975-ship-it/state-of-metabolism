@@ -48,7 +48,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-chat`
 const QUICK_QUESTIONS: { text: string; agent?: AgentRole }[] = [
   { text: 'Что мне сейчас съесть?', agent: 'nutrition' },
   { text: 'Какое упражнение сделать?', agent: 'training' },
-  { text: 'Составь план на вечер', agent: 'reminder' },
+  { text: '📅 Программа на неделю', agent: 'training' },
   { text: 'Как я сегодня?', agent: 'coach' },
 ];
 
