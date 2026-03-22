@@ -56,7 +56,7 @@ function getContext() {
   const entry = getTodayEntry();
   const profile = getProfile();
   return {
-    weight: entry.weight,
+    weight: entry.weight || profile.weight,
     hunger: entry.hunger,
     energy: entry.energy,
     coffee: entry.coffee,
@@ -65,6 +65,11 @@ function getContext() {
     goal: profile.goal,
     conditions: profile.conditions,
     name: profile.name,
+    age: profile.age,
+    height: profile.height,
+    sex: profile.sex,
+    activityLevel: profile.activityLevel,
+    targetWeight: profile.targetWeight,
     sleepHours: entry.sleepHours,
     sleepQuality: entry.sleepQuality,
     waterLiters: ((entry.water || 0) * 250 / 1000).toFixed(1),
