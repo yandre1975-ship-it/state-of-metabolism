@@ -16,26 +16,30 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
+      // Demo mode: sign in with a fixed demo account
+      const demoEmail = 'demo@healthoperator.app';
+      const demoPassword = 'demo123456';
+
+      // Try to sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: demoPassword,
+      });
+
+      if (signInError) {
+        // If sign in fails, create the demo account
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: demoEmail,
+          password: demoPassword,
           options: {
-            data: { name: name.trim() },
+            data: { name: name.trim() || 'Пользователь' },
             emailRedirectTo: window.location.origin,
           },
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
       }
     } catch (err: any) {
-      setError(err.message === 'Invalid login credentials'
-        ? 'Неверный email или пароль'
-        : err.message === 'User already registered'
-        ? 'Этот email уже зарегистрирован'
-        : err.message || 'Произошла ошибка');
+      setError(err.message || 'Произошла ошибка');
     }
     setLoading(false);
   };
@@ -56,44 +60,6 @@ export default function Auth() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div className="relative">
-              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ваше имя"
-                className="w-full bg-card border rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50"
-              />
-            </div>
-          )}
-
-          <div className="relative">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Email"
-              required
-              className="w-full bg-card border rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50"
-            />
-          </div>
-
-          <div className="relative">
-            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Пароль"
-              required
-              minLength={6}
-              className="w-full bg-card border rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50"
-            />
-          </div>
-
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-status-red-bg">
               <AlertCircle size={14} className="text-status-red flex-shrink-0 mt-0.5" />
@@ -106,18 +72,13 @@ export default function Auth() {
             disabled={loading}
             className="w-full h-12 rounded-2xl bg-foreground text-background font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.97] transition-all disabled:opacity-50"
           >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : (isLogin ? 'Войти' : 'Зарегистрироваться')}
+            {loading ? <Loader2 size={16} className="animate-spin" /> : 'Войти'}
           </button>
         </form>
 
-        <div className="text-center">
-          <button
-            onClick={() => { setIsLogin(!isLogin); setError(null); }}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
-          </button>
-        </div>
+        <p className="text-xs text-center text-muted-foreground">
+          Демо-режим — вход без регистрации
+        </p>
       </div>
     </div>
   );
