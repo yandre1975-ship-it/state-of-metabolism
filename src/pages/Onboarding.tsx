@@ -65,6 +65,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       targetDate: targetDate || undefined,
     };
     saveProfile(profile);
+    saveCloudProfile(profile);
     onComplete();
   };
 
