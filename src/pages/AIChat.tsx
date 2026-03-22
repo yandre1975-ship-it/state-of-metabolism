@@ -146,7 +146,7 @@ export default function AIChat() {
         try {
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) { assistantSoFar += content; onChunk(assistantSoFar); }
+          if (content) { assistantSoFar += content; onChunk(assistantSoFar, agentRole); }
         } catch {
           textBuffer = line + '\n' + textBuffer;
           break;
