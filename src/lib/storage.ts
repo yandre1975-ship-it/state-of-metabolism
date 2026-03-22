@@ -9,11 +9,14 @@ export interface DailyEntry {
 }
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
+export type Goal = 'lose' | 'maintain' | 'gain';
 
 export interface UserProfile {
   sex: 'male' | 'female';
   age: number;
   height: number; // cm
+  weight: number; // kg
+  goal: Goal;
   conditions: HealthCondition[];
 }
 
