@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Plus, Trash2, History } from 'lucide-react';
-import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, type FoodItem } from '@/lib/storage';
+import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import FoodHistory from './FoodHistory';
 import ExerciseTracker from '@/components/ExerciseTracker';
