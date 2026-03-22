@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, BarChart3, CheckSquare, UtensilsCrossed } from 'lucide-react';
+import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell } from 'lucide-react';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import Checklist from './Checklist';
