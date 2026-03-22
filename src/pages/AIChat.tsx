@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed, Settings2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed, Settings2, Square } from 'lucide-react';
 import { getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, type FoodItem } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
@@ -120,6 +120,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(() => {
     try { return parseFloat(localStorage.getItem('tts_rate') || '1.05'); } catch { return 1.05; }
   });
@@ -169,8 +170,16 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
     utterance.pitch = speechPitch;
     const voice = getSelectedVoice();
     if (voice) utterance.voice = voice;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
     synthRef.current.speak(utterance);
   }, [speechRate, speechPitch, getSelectedVoice]);
+
+  const stopSpeaking = useCallback(() => {
+    synthRef.current.cancel();
+    setIsSpeaking(false);
+  }, []);
 
   const speakText = useCallback((text: string) => {
     if (!autoSpeak) return;
@@ -629,16 +638,20 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
         {/* TTS toggle */}
         <button
           onClick={() => {
+            if (isSpeaking) {
+              stopSpeaking();
+              return;
+            }
             setAutoSpeak(prev => {
               if (prev) synthRef.current.cancel();
               return !prev;
             });
           }}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
-            ${autoSpeak ? 'bg-emerald-500 text-white' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
-          title={autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
+            ${isSpeaking ? 'bg-red-500 text-white animate-pulse' : autoSpeak ? 'bg-emerald-500 text-white' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title={isSpeaking ? 'Остановить озвучку' : autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
         >
-          {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          {isSpeaking ? <Square size={14} /> : autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
         </button>
         {/* Voice settings button */}
         <button
