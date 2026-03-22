@@ -87,7 +87,7 @@ export function getProfile(): UserProfile {
     const stored = localStorage.getItem(PROFILE_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  return { sex: 'male', age: 30, height: 170, weight: 75, goal: 'lose' as Goal, conditions: [] };
+  return { name: '', sex: 'male', age: 30, height: 170, weight: 75, goal: 'lose' as Goal, conditions: [] };
 }
 
 export function saveProfile(profile: UserProfile) {
