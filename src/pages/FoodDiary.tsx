@@ -79,13 +79,19 @@ export default function FoodDiary() {
           </button>
         </div>
         <div className="grid grid-cols-4 gap-3">
-          <MacroRing label="Ккал" current={totals.cal} target={targets.calories} unit="" color="var(--foreground)" />
+          <MacroRing label="Нетто" current={netCalories} target={targets.calories} unit="" color="var(--foreground)" />
           <MacroRing label="Белки" current={totals.p} target={targets.protein} unit="г" color="hsl(var(--status-green))" />
           <MacroRing label="Углев." current={totals.c} target={targets.carbs} unit="г" color="hsl(var(--status-yellow))" />
           <MacroRing label="Жиры" current={totals.f} target={targets.fat} unit="г" color="hsl(var(--status-red))" />
         </div>
+        {/* Calorie breakdown */}
+        <div className="flex items-center justify-center gap-4 mt-3 text-[11px] text-muted-foreground tabular-nums">
+          <span>Съедено: {totals.cal} ккал</span>
+          <span>—</span>
+          <span className="text-status-green">Сожжено: {burned} ккал</span>
+        </div>
         {!entry.weight && (
-          <p className="text-xs text-muted-foreground mt-3 text-center">
+          <p className="text-xs text-muted-foreground mt-2 text-center">
             Укажите вес на вкладке «Сегодня» для точного расчёта
           </p>
         )}
