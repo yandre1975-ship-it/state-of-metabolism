@@ -13,6 +13,7 @@ const conditionsList: { id: HealthCondition; label: string; description: string 
 ];
 
 export default function Profile() {
+  const { signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const [saved, setSaved] = useState(false);
   const [nameStr, setNameStr] = useState(profile.name || '');
