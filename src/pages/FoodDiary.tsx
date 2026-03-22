@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, Trash2, Lightbulb, ChevronDown, ChevronUp, Scale, Activity, Flame, Zap, Drumstick, Coffee, Droplets, Moon } from 'lucide-react';
 import { getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
