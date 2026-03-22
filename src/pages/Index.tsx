@@ -1,22 +1,22 @@
 import { useState } from 'react';
-import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell, User, CalendarDays, Crown } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
-import Checklist from './Checklist';
 import FoodDiary from './FoodDiary';
 import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
+import AIChat from './AIChat';
 import Onboarding from './Onboarding';
 import ProUpgrade, { ProGate } from '@/components/ProUpgrade';
 
 const tabs = [
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
   { id: 'food', label: 'Еда & Спорт', icon: Dumbbell },
+  { id: 'chat', label: 'AI Коуч', icon: MessageCircle },
   { id: 'weekly', label: 'Неделя', icon: CalendarDays, proFeature: 'weeklyReview' as const },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
-  { id: 'checklist', label: 'Чеклист', icon: CheckSquare },
   { id: 'profile', label: 'Профиль', icon: User },
 ] as const;
 
@@ -44,12 +44,12 @@ export default function Index() {
     switch (tab) {
       case 'dashboard': return <Dashboard />;
       case 'food': return <FoodDiary />;
+      case 'chat': return <AIChat />;
       case 'weekly':
         return canAccess('weeklyReview')
           ? <WeeklyReview />
           : <ProGate feature="Еженедельный обзор" onUpgrade={() => setShowUpgrade(true)} />;
       case 'charts': return <Charts />;
-      case 'checklist': return <Checklist />;
       case 'profile': return <Profile />;
     }
   };
