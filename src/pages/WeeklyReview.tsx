@@ -1,6 +1,6 @@
 import { getEntries, getChecklist, getProfile, getTodayExercises, type DailyEntry } from '@/lib/storage';
 import { getAdaptationWarnings } from '@/lib/dailyPlan';
-import { TrendingDown, TrendingUp, Minus, AlertTriangle, Award, BarChart3 } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, AlertTriangle, Award, BarChart3, Moon } from 'lucide-react';
 
 export default function WeeklyReview() {
   const entries = getEntries();
@@ -25,8 +25,17 @@ export default function WeeklyReview() {
   const avgActivity = Math.round(avg(last7.map(e => e.activity)));
   const proteinDays = last7.filter(e => e.protein).length;
 
+  // Sleep
+  const sleepData = last7.map(e => e.sleepHours || 0);
+  const sleepWithData = sleepData.filter(h => h > 0);
+  const avgSleep = sleepWithData.length > 0 ? round(avg(sleepWithData), 1) : null;
+  const qualityData = last7.map(e => e.sleepQuality || 0);
+  const qualityWithData = qualityData.filter(q => q > 0);
+  const avgQuality = qualityWithData.length > 0 ? round(avg(qualityWithData), 1) : null;
+  const qualityLabels: Record<number, string> = { 1: 'Ужасно', 2: 'Плохо', 3: 'Нормально', 4: 'Хорошо', 5: 'Отлично' };
+
   // Generate insight
-  const insight = generateInsight(last7, weightDelta, avgHunger, avgEnergy, profile);
+  const insight = generateInsight(last7, weightDelta, avgHunger, avgEnergy, avgSleep, avgQuality, profile);
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
@@ -90,6 +99,49 @@ export default function WeeklyReview() {
         <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
           <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
         </div>
+      </div>
+
+      {/* Sleep chart */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Moon size={16} className="text-muted-foreground" />
+            <span className="font-semibold text-sm">🌙 Сон за неделю</span>
+          </div>
+          {avgSleep !== null && (
+            <span className="text-xs text-muted-foreground">Ср. {avgSleep} ч</span>
+          )}
+        </div>
+        {/* Bar chart */}
+        <div className="flex items-end gap-1.5 h-28">
+          {last7.map((e, i) => {
+            const h = e.sleepHours || 0;
+            const maxH = 12;
+            const pct = Math.min(100, (h / maxH) * 100);
+            const color = h === 0 ? 'bg-secondary' : h >= 7 ? 'bg-status-green' : h >= 6 ? 'bg-status-yellow' : 'bg-status-red';
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <span className="text-[10px] tabular-nums text-muted-foreground">{h > 0 ? `${h}` : ''}</span>
+                <div className="w-full rounded-t-md transition-all duration-300" style={{ height: `${Math.max(4, pct)}%` }}>
+                  <div className={`w-full h-full rounded-t-md ${color}`} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+        {/* Quality */}
+        {avgQuality !== null && (
+          <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-secondary">
+            <span className="text-xs text-muted-foreground">Среднее качество сна:</span>
+            <span className="text-sm font-semibold">{avgQuality}/5 — {qualityLabels[Math.round(avgQuality)] || 'Нормально'}</span>
+          </div>
+        )}
+        {avgSleep !== null && avgSleep < 7 && (
+          <p className="text-xs text-muted-foreground mt-3">⚠️ Среднее время сна ниже нормы (7–8 ч). Недосып замедляет метаболизм и усиливает голод.</p>
+        )}
       </div>
 
       {/* AI Insight */}
@@ -167,7 +219,7 @@ function round(n: number, d: number): number {
   return Math.round(n * f) / f;
 }
 
-function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHunger: number, avgEnergy: number, profile: any): string {
+function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHunger: number, avgEnergy: number, avgSleep: number | null, avgQuality: number | null, profile: any): string {
   const parts: string[] = [];
 
   if (weightDelta !== null) {
@@ -186,6 +238,14 @@ function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHun
 
   if (avgEnergy <= 2.5) {
     parts.push('Низкая энергия мешает следовать плану. Приоритет — качество сна и управление стрессом.');
+  }
+
+  if (avgSleep !== null && avgSleep < 7) {
+    parts.push(`Средний сон ${avgSleep} ч — ниже нормы. Недосып повышает кортизол и аппетит.`);
+  }
+
+  if (avgQuality !== null && avgQuality < 3) {
+    parts.push('Низкое качество сна снижает восстановление. Попробуйте улучшить гигиену сна.');
   }
 
   const proteinDays = last7.filter(e => e.protein).length;
