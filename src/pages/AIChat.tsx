@@ -283,6 +283,7 @@ export default function AIChat() {
       );
       // Final update with agent info
       upsertAssistant(result.content, result.agent);
+      speakText(result.content);
     } catch (e: any) {
       console.error('Chat error:', e);
       setError(e.message || 'Не удалось подключиться к AI');
