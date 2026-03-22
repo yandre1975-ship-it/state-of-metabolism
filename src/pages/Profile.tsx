@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getProfile, saveProfile, type UserProfile, type HealthCondition } from '@/lib/storage';
+import { getProfile, saveProfile, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
 import { Check, User } from 'lucide-react';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
