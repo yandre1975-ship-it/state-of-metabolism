@@ -82,7 +82,7 @@ export default function FoodDiary() {
               <div className="flex items-center gap-3">
                 {mealCal > 0 && <span className="text-xs text-muted-foreground tabular-nums">{mealCal} ккал</span>}
                 <button
-                  onClick={() => { setAdding(adding === meal.id ? null : meal.id); setForm({ name: '', calories: '', protein: '', carbs: '', fat: '' }); }}
+                  onClick={() => { setAdding(adding === meal.id ? null : meal.id); setForm({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' }); setBasePer100(null); }}
                   className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/70 transition-colors active:scale-95"
                 >
                   <Plus size={16} />
