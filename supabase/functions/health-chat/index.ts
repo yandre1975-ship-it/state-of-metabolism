@@ -4,6 +4,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Expose-Headers": "X-Agent-Role, X-Agent-Label, X-Agent-Emoji",
 };
 
 // ── Agent Definitions ──
@@ -232,14 +233,30 @@ serve(async (req) => {
       );
     }
 
-    // Return streamed response with agent info header
-    return new Response(response.body, {
+    // Prepend agent info as first SSE event, then pipe AI stream
+    const agentEvent = `data: ${JSON.stringify({ agent: { role: agentRole, label: agent.label, emoji: agent.emoji } })}\n\n`;
+    const agentBlob = new Blob([new TextEncoder().encode(agentEvent)]);
+
+    // Create a combined stream: agent event + AI response
+    const combinedStream = new ReadableStream({
+      async start(controller) {
+        // Send agent info first
+        controller.enqueue(new TextEncoder().encode(agentEvent));
+        // Then pipe the AI stream
+        const reader = response.body!.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        controller.close();
+      },
+    });
+
+    return new Response(combinedStream, {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
-        "X-Agent-Role": agentRole,
-        "X-Agent-Label": encodeURIComponent(agent.label),
-        "X-Agent-Emoji": encodeURIComponent(agent.emoji),
       },
     });
   } catch (e) {

@@ -93,7 +93,7 @@ export default function AIChat() {
 
   const streamAI = useCallback(async (
     allMessages: Msg[],
-    onChunk: (soFar: string) => void,
+    onChunk: (soFar: string, agent?: AgentRole) => void,
     requestedAgent?: AgentRole,
   ): Promise<{ content: string; agent: AgentRole }> => {
     const context = getContext();
@@ -115,10 +115,6 @@ export default function AIChat() {
       throw new Error(data.error || `Ошибка: ${resp.status}`);
     }
 
-    // Read agent info from headers
-    const agentRole = (resp.headers.get('X-Agent-Role') || 'coach') as AgentRole;
-    setActiveAgent(agentRole);
-
     if (!resp.body) throw new Error('Нет ответа от сервера');
 
     const reader = resp.body.getReader();
@@ -126,6 +122,7 @@ export default function AIChat() {
     let textBuffer = '';
     let assistantSoFar = '';
     let streamDone = false;
+    let agentRole: AgentRole = requestedAgent || 'coach';
 
     while (!streamDone) {
       const { done, value } = await reader.read();
@@ -143,8 +140,15 @@ export default function AIChat() {
         if (jsonStr === '[DONE]') { streamDone = true; break; }
         try {
           const parsed = JSON.parse(jsonStr);
+          // Check for agent info event (sent first by our edge function)
+          if (parsed.agent) {
+            agentRole = parsed.agent.role as AgentRole;
+            setActiveAgent(agentRole);
+            onChunk('', agentRole);
+            continue;
+          }
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) { assistantSoFar += content; onChunk(assistantSoFar); }
+          if (content) { assistantSoFar += content; onChunk(assistantSoFar, agentRole); }
         } catch {
           textBuffer = line + '\n' + textBuffer;
           break;
@@ -163,7 +167,7 @@ export default function AIChat() {
         try {
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) { assistantSoFar += content; onChunk(assistantSoFar); }
+          if (content) { assistantSoFar += content; onChunk(assistantSoFar, agentRole); }
         } catch { /* ignore */ }
       }
     }
@@ -191,7 +195,7 @@ export default function AIChat() {
       try {
         const proactivePrompt = buildProactivePrompt();
         const initMessages: Msg[] = [{ role: 'user', content: proactivePrompt }];
-        const result = await streamAI(initMessages, (s) => upsertAssistant(s, 'coach'), 'coach');
+        const result = await streamAI(initMessages, (s, a) => upsertAssistant(s, a), 'coach');
         upsertAssistant(result.content, result.agent);
       } catch (e) {
         console.error('Proactive greeting error:', e);
@@ -218,7 +222,7 @@ export default function AIChat() {
     try {
       const result = await streamAI(
         [...messages, userMsg],
-        (s) => upsertAssistant(s),
+        (s, a) => upsertAssistant(s, a),
         requestedAgent,
       );
       // Final update with agent info
