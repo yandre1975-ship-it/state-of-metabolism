@@ -123,7 +123,7 @@ export function getTodayEntry(): DailyEntry {
   const today = getToday();
   const entries = getEntries();
   return entries.find(e => e.date === today) || {
-    date: today, weight: null, hunger: 2, energy: 3, coffee: 0, protein: false, activity: 0,
+    date: today, weight: null, hunger: 2, energy: 3, coffee: 0, protein: false, activity: 0, water: 0,
   };
 }
 
