@@ -176,24 +176,53 @@ export function getFoodByDate(date: string): DailyFood {
 }
 
 /**
- * Calculate daily macro targets based on weight (kg) and activity (min).
- * Uses Mifflin-St Jeor BMR estimate (male default) + activity factor.
+ * Mifflin-St Jeor with profile, health conditions, and activity.
  */
-export function calcMacroTargets(weight: number | null, activityMin: number) {
+export function calcMacroTargets(weight: number | null, activityMin: number, profile?: UserProfile) {
   const w = weight || 75;
-  // Simplified BMR ≈ 10 * weight + 600 (rough mid estimate)
-  const bmr = 10 * w + 600;
-  // Activity calories: ~5 kcal per minute of moderate activity
+  const age = profile?.age || 30;
+  const height = profile?.height || 170;
+
+  // Mifflin-St Jeor BMR
+  let bmr: number;
+  if (profile?.sex === 'female') {
+    bmr = 10 * w + 6.25 * height - 5 * age - 161;
+  } else {
+    bmr = 10 * w + 6.25 * height - 5 * age + 5;
+  }
+
+  // Activity calories
   const activityCal = activityMin * 5;
-  // Slight deficit for fat loss
-  const totalCal = Math.round(bmr + activityCal - 300);
+  let totalCal = Math.round(bmr + activityCal - 300);
 
-  // Macro split: 30% protein, 40% carbs, 30% fat
-  const proteinG = Math.round((totalCal * 0.3) / 4);
-  const carbsG = Math.round((totalCal * 0.4) / 4);
-  const fatG = Math.round((totalCal * 0.3) / 9);
+  // Macro split defaults: 30P / 40C / 30F
+  let pPct = 0.3, cPct = 0.4, fPct = 0.3;
 
-  return { calories: Math.max(totalCal, 1200), protein: proteinG, carbs: carbsG, fat: fatG };
+  // Adjust for health conditions
+  const conditions = profile?.conditions || [];
+
+  if (conditions.includes('insulin_resistance')) {
+    // Lower carbs, higher fat/protein
+    pPct = 0.35; cPct = 0.25; fPct = 0.4;
+    totalCal = Math.round(totalCal * 0.95); // slightly lower
+  }
+  if (conditions.includes('hypothyroid')) {
+    totalCal = Math.round(totalCal * 0.93); // slower metabolism
+  }
+  if (conditions.includes('pcos')) {
+    pPct = 0.35; cPct = 0.25; fPct = 0.4;
+  }
+  if (conditions.includes('high_cortisol')) {
+    totalCal = Math.round(totalCal * 0.95);
+  }
+
+  totalCal = Math.max(totalCal, 1200);
+
+  const proteinG = Math.round((totalCal * pPct) / 4);
+  const carbsG = Math.round((totalCal * cPct) / 4);
+  const fatG = Math.round((totalCal * fPct) / 9);
+
+  return { calories: totalCal, protein: proteinG, carbs: carbsG, fat: fatG };
 }
 
 // ── Exercises ──
