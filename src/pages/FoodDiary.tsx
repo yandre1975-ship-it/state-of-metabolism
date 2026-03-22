@@ -132,29 +132,6 @@ export default function FoodDiary() {
         </p>
       </div>
 
-      {/* Coffee Tracker */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Coffee size={16} className="text-muted-foreground" />
-            <span className="font-semibold text-sm">Кофе</span>
-          </div>
-          <span className="text-xs text-muted-foreground tabular-nums">{entryData.coffee} чашек</span>
-        </div>
-        <div className="flex gap-2">
-          {[0, 1, 2, 3, 4, 5].map(n => (
-            <button key={n} onClick={() => updateEntry({ coffee: n })}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-                ${entryData.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
-              {n}
-            </button>
-          ))}
-        </div>
-        {entryData.coffee > 2 && (
-          <p className="text-[10px] text-status-yellow mt-2">⚠️ Более 2 чашек может влиять на сон и аппетит</p>
-        )}
-      </div>
-
       {/* Interleaved: meal → recommendations → snack → exercises */}
       {mealSlots.map(({ meal, label, exercise }, slotIdx) => {
         const items = food.items.filter(i => i.meal === meal);
