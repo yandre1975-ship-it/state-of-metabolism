@@ -1,6 +1,7 @@
 import { getEntries, getProfile, type DailyEntry } from '@/lib/storage';
+import { canAccess } from '@/lib/premium';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { TrendingDown, Target } from 'lucide-react';
+import { TrendingDown, Target, Crown } from 'lucide-react';
 
 export default function Charts() {
   const allEntries = getEntries();
