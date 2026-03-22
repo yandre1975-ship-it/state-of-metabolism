@@ -134,8 +134,10 @@ export default function FoodDiary() {
                           className="w-full text-left px-3 py-2.5 hover:bg-secondary/60 transition-colors border-b last:border-0"
                           onMouseDown={e => {
                             e.preventDefault();
+                            setBasePer100(s);
                             setForm({
                               name: s.name,
+                              grams: '100',
                               calories: String(s.calories),
                               protein: String(s.protein),
                               carbs: String(s.carbs),
