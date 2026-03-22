@@ -559,6 +559,71 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
         </div>
       )}
 
+      {/* Voice settings panel */}
+      {showVoiceSettings && (
+        <div className="mb-3 p-4 rounded-2xl bg-card border shadow-sm space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">⚙️ Настройки голоса</span>
+            <button onClick={() => setShowVoiceSettings(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+          </div>
+
+          {availableVoices.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Голос</label>
+              <select
+                value={selectedVoiceURI}
+                onChange={e => setSelectedVoiceURI(e.target.value)}
+                className="w-full bg-secondary border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Авто (русский)</option>
+                {availableVoices.map(v => (
+                  <option key={v.voiceURI} value={v.voiceURI}>
+                    {v.name} {v.localService ? '(локальный)' : '(сетевой)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Скорость</label>
+              <span className="text-xs tabular-nums font-medium">{speechRate.toFixed(2)}×</span>
+            </div>
+            <input
+              type="range" min="0.5" max="2" step="0.05" value={speechRate}
+              onChange={e => setSpeechRate(parseFloat(e.target.value))}
+              className="w-full accent-primary h-1.5"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>0.5×</span><span>1×</span><span>2×</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Тон</label>
+              <span className="text-xs tabular-nums font-medium">{speechPitch.toFixed(1)}</span>
+            </div>
+            <input
+              type="range" min="0.5" max="2" step="0.1" value={speechPitch}
+              onChange={e => setSpeechPitch(parseFloat(e.target.value))}
+              className="w-full accent-primary h-1.5"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Низкий</span><span>Норма</span><span>Высокий</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => doSpeak('Привет! Так звучит мой голос с текущими настройками.')}
+            className="w-full py-2 rounded-xl bg-secondary text-sm font-medium hover:bg-secondary/70 transition-colors active:scale-[0.98]"
+          >
+            🔊 Тест голоса
+          </button>
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex gap-2 pt-3 border-t items-center">
         {/* TTS toggle */}
@@ -574,6 +639,15 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
           title={autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
         >
           {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
+        {/* Voice settings button */}
+        <button
+          onClick={() => setShowVoiceSettings(prev => !prev)}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
+            ${showVoiceSettings ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title="Настройки голоса"
+        >
+          <Settings2 size={16} />
         </button>
 
         <input
