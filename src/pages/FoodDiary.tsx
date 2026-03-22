@@ -14,7 +14,9 @@ export default function FoodDiary() {
   const entry = getTodayEntry();
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
-  const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+  const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
+  // Store the "per 100g" base when a DB item is selected, so we can recalculate
+  const [basePer100, setBasePer100] = useState<FoodDBItem | null>(null);
   const [suggestions, setSuggestions] = useState<FoodDBItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,8 @@ export default function FoodDiary() {
       meal: adding,
     };
     save([...food.items, item]);
-    setForm({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+    setForm({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
+    setBasePer100(null);
     setAdding(null);
   };
 
@@ -79,7 +82,7 @@ export default function FoodDiary() {
               <div className="flex items-center gap-3">
                 {mealCal > 0 && <span className="text-xs text-muted-foreground tabular-nums">{mealCal} ккал</span>}
                 <button
-                  onClick={() => { setAdding(adding === meal.id ? null : meal.id); setForm({ name: '', calories: '', protein: '', carbs: '', fat: '' }); }}
+                  onClick={() => { setAdding(adding === meal.id ? null : meal.id); setForm({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' }); setBasePer100(null); }}
                   className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/70 transition-colors active:scale-95"
                 >
                   <Plus size={16} />
@@ -131,8 +134,10 @@ export default function FoodDiary() {
                           className="w-full text-left px-3 py-2.5 hover:bg-secondary/60 transition-colors border-b last:border-0"
                           onMouseDown={e => {
                             e.preventDefault();
+                            setBasePer100(s);
                             setForm({
                               name: s.name,
+                              grams: '100',
                               calories: String(s.calories),
                               protein: String(s.protein),
                               carbs: String(s.carbs),
@@ -145,6 +150,57 @@ export default function FoodDiary() {
                           <p className="text-[11px] text-muted-foreground tabular-nums">
                             {s.calories} ккал · Б{s.protein} · У{s.carbs} · Ж{s.fat}
                           </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Portion weight */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Порция (г)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={form.grams}
+                      onChange={e => {
+                        const g = e.target.value;
+                        setForm(f => {
+                          const next = { ...f, grams: g };
+                          if (basePer100 && g) {
+                            const mult = Number(g) / 100;
+                            next.calories = String(Math.round(basePer100.calories * mult));
+                            next.protein = String(Math.round(basePer100.protein * mult * 10) / 10);
+                            next.carbs = String(Math.round(basePer100.carbs * mult * 10) / 10);
+                            next.fat = String(Math.round(basePer100.fat * mult * 10) / 10);
+                          }
+                          return next;
+                        });
+                      }}
+                      placeholder="100"
+                      className="w-full bg-secondary rounded-lg px-2 py-2 text-sm outline-none tabular-nums placeholder:text-muted-foreground/40"
+                    />
+                  </div>
+                  {basePer100 && (
+                    <div className="flex gap-1 mt-4">
+                      {[50, 100, 150, 200].map(g => (
+                        <button
+                          key={g}
+                          onClick={() => {
+                            const mult = g / 100;
+                            setForm(f => ({
+                              ...f,
+                              grams: String(g),
+                              calories: String(Math.round(basePer100.calories * mult)),
+                              protein: String(Math.round(basePer100.protein * mult * 10) / 10),
+                              carbs: String(Math.round(basePer100.carbs * mult * 10) / 10),
+                              fat: String(Math.round(basePer100.fat * mult * 10) / 10),
+                            }));
+                          }}
+                          className={`px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95
+                            ${form.grams === String(g) ? 'bg-foreground text-background' : 'bg-secondary text-secondary-foreground'}`}
+                        >
+                          {g}г
                         </button>
                       ))}
                     </div>
