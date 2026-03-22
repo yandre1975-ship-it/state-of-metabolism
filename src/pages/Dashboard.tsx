@@ -139,11 +139,14 @@ export default function Dashboard() {
 
       {/* Water Tracker */}
       {(() => {
-        const waterNorm = Math.round((profile.weight || 75) * 30 / 250); // 30ml per kg, 250ml per glass
+        const waterNormMl = Math.round((profile.weight || 75) * 30);
+        const waterNormL = (waterNormMl / 1000).toFixed(1);
+        const waterNormGlasses = Math.round(waterNormMl / 250);
         const glasses = entry.water || 0;
-        const pct = Math.min(100, Math.round((glasses / waterNorm) * 100));
+        const liters = (glasses * 250 / 1000);
+        const pct = Math.min(100, Math.round((glasses / waterNormGlasses) * 100));
         return (
-          <Card icon={<Droplets size={16} />} label={`Вода: ${glasses} / ${waterNorm} стаканов`}>
+          <Card icon={<Droplets size={16} />} label={`Вода: ${liters.toFixed(1)} л / ${waterNormL} л`}>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <button onClick={() => update({ water: Math.max(0, glasses - 1) })}
@@ -157,8 +160,28 @@ export default function Dashboard() {
                 <button onClick={() => update({ water: glasses + 1 })}
                   className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground font-bold text-lg transition-all active:scale-95 hover:bg-secondary/70">+</button>
               </div>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs text-muted-foreground">или введите литры:</span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={liters > 0 ? liters.toFixed(1) : ''}
+                  placeholder="0.0"
+                  onChange={e => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val >= 0) {
+                      update({ water: Math.round(val * 1000 / 250) });
+                    } else if (e.target.value === '') {
+                      update({ water: 0 });
+                    }
+                  }}
+                  className="w-16 bg-secondary text-center text-sm font-medium rounded-lg py-1 outline-none focus:ring-2 focus:ring-ring tabular-nums"
+                />
+                <span className="text-xs text-muted-foreground">л</span>
+              </div>
               <p className="text-xs text-muted-foreground text-center">
-                {pct >= 100 ? '✅ Норма выполнена!' : `Рекомендация: ${waterNorm} стаканов (${Math.round((profile.weight || 75) * 30 / 1000)} л) в день`}
+                {pct >= 100 ? '✅ Норма выполнена!' : `Рекомендация: ${waterNormL} л (${waterNormGlasses} стаканов) в день`}
               </p>
             </div>
           </Card>
