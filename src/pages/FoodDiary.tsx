@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Trash2, History } from 'lucide-react';
 import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
+import FoodHistory from './FoodHistory';
 
 const meals = [
   { id: 'breakfast' as const, label: '🌅 Завтрак' },
