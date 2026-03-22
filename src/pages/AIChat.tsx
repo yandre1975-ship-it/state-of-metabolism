@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { getTodayEntry, getProfile, getStatus } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
@@ -86,6 +86,62 @@ export default function AIChat() {
   const [activeAgent, setActiveAgent] = useState<AgentRole | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const greetedRef = useRef(false);
+
+  // Voice state
+  const [isListening, setIsListening] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef(window.speechSynthesis);
+
+  const speakText = useCallback((text: string) => {
+    if (!autoSpeak) return;
+    synthRef.current.cancel();
+    // Strip markdown
+    const clean = text.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 1.05;
+    utterance.pitch = 1;
+    // Try to pick a Russian voice
+    const voices = synthRef.current.getVoices();
+    const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
+    if (ruVoice) utterance.voice = ruVoice;
+    synthRef.current.speak(utterance);
+  }, [autoSpeak]);
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setError('Голосовой ввод не поддерживается в этом браузере');
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(transcript);
+      if (event.results[0]?.isFinal) {
+        setIsListening(false);
+      }
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, []);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -197,6 +253,7 @@ export default function AIChat() {
         const initMessages: Msg[] = [{ role: 'user', content: proactivePrompt }];
         const result = await streamAI(initMessages, (s, a) => upsertAssistant(s, a), 'coach');
         upsertAssistant(result.content, result.agent);
+        speakText(result.content);
       } catch (e) {
         console.error('Proactive greeting error:', e);
         setMessages([{
@@ -227,6 +284,7 @@ export default function AIChat() {
       );
       // Final update with agent info
       upsertAssistant(result.content, result.agent);
+      speakText(result.content);
     } catch (e: any) {
       console.error('Chat error:', e);
       setError(e.message || 'Не удалось подключиться к AI');
@@ -279,14 +337,33 @@ export default function AIChat() {
                     {agentMeta.label}
                   </span>
                 )}
-                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed
+                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed relative group
                   ${msg.role === 'user'
                     ? 'bg-foreground text-background rounded-br-md'
                     : 'bg-card border rounded-bl-md'}`}>
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="prose prose-sm max-w-none [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                      <button
+                        onClick={() => {
+                          synthRef.current.cancel();
+                          const clean = msg.content.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
+                          const utt = new SpeechSynthesisUtterance(clean);
+                          utt.lang = 'ru-RU';
+                          utt.rate = 1.05;
+                          const voices = synthRef.current.getVoices();
+                          const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
+                          if (ruVoice) utt.voice = ruVoice;
+                          synthRef.current.speak(utt);
+                        }}
+                        className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-md bg-secondary/80 text-muted-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
+                        title="Прослушать"
+                      >
+                        <Volume2 size={11} />
+                      </button>
+                    </>
                   ) : (
                     msg.content
                   )}
@@ -344,19 +421,50 @@ export default function AIChat() {
       )}
 
       {/* Input */}
-      <div className="flex gap-2 pt-3 border-t">
+      <div className="flex gap-2 pt-3 border-t items-center">
+        {/* TTS toggle */}
+        <button
+          onClick={() => {
+            setAutoSpeak(prev => {
+              if (prev) synthRef.current.cancel();
+              return !prev;
+            });
+          }}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
+            ${autoSpeak ? 'bg-emerald-500 text-white' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title={autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
+        >
+          {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
+
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
-          placeholder="Спросите что-нибудь..."
+          placeholder={isListening ? 'Говорите...' : 'Спросите что-нибудь...'}
           disabled={isLoading}
-          className="flex-1 bg-card border rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50 disabled:opacity-50"
+          className={`flex-1 bg-card border rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50 disabled:opacity-50
+            ${isListening ? 'border-red-400 ring-2 ring-red-400/30' : ''}`}
         />
+
+        {/* Mic button */}
+        <button
+          onClick={isListening ? stopListening : startListening}
+          disabled={isLoading}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
+            ${isListening
+              ? 'bg-red-500 text-white animate-pulse'
+              : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title={isListening ? 'Остановить запись' : 'Голосовой ввод'}
+        >
+          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+        </button>
+
+        {/* Send button */}
         <button
           onClick={() => sendMessage(input)}
           disabled={!input.trim() || isLoading}
-          className="w-11 h-11 rounded-2xl bg-foreground text-background flex items-center justify-center active:scale-95 transition-all disabled:opacity-40"
+          className="w-10 h-10 rounded-xl bg-foreground text-background flex items-center justify-center active:scale-95 transition-all disabled:opacity-40 flex-shrink-0"
         >
           <Send size={16} />
         </button>
