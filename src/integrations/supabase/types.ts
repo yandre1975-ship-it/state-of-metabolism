@@ -103,6 +103,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activity_level: string
           age: number
           conditions: string[]
           created_at: string
@@ -117,6 +118,7 @@ export type Database = {
           weight: number
         }
         Insert: {
+          activity_level?: string
           age?: number
           conditions?: string[]
           created_at?: string
@@ -131,6 +133,7 @@ export type Database = {
           weight?: number
         }
         Update: {
+          activity_level?: string
           age?: number
           conditions?: string[]
           created_at?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN activity_level text NOT NULL DEFAULT 'light' CHECK (activity_level IN ('sedentary', 'light', 'moderate', 'active'));

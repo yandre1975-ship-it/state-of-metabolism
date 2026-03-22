@@ -60,6 +60,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       height: Number(height) || 175,
       weight: Number(weight) || 85,
       goal,
+      activityLevel: activityLevel as UserProfile['activityLevel'],
       conditions,
       targetWeight: targetWeight ? Number(targetWeight) : undefined,
       targetDate: targetDate || undefined,

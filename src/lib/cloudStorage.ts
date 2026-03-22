@@ -32,6 +32,7 @@ export async function saveCloudProfile(profile: UserProfile) {
     height: profile.height,
     weight: profile.weight,
     goal: profile.goal,
+    activity_level: profile.activityLevel,
     conditions: profile.conditions,
     target_weight: profile.targetWeight ?? null,
     target_date: profile.targetDate ?? null,
