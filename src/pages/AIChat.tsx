@@ -115,12 +115,6 @@ export default function AIChat() {
       throw new Error(data.error || `Ошибка: ${resp.status}`);
     }
 
-    // Read agent info from headers
-    const agentRole = (resp.headers.get('X-Agent-Role') || 'coach') as AgentRole;
-    setActiveAgent(agentRole);
-    // Send initial empty chunk with agent so UI shows label immediately
-    onChunk('', agentRole);
-
     if (!resp.body) throw new Error('Нет ответа от сервера');
 
     const reader = resp.body.getReader();
@@ -128,6 +122,7 @@ export default function AIChat() {
     let textBuffer = '';
     let assistantSoFar = '';
     let streamDone = false;
+    let agentRole: AgentRole = requestedAgent || 'coach';
 
     while (!streamDone) {
       const { done, value } = await reader.read();
@@ -145,6 +140,13 @@ export default function AIChat() {
         if (jsonStr === '[DONE]') { streamDone = true; break; }
         try {
           const parsed = JSON.parse(jsonStr);
+          // Check for agent info event (sent first by our edge function)
+          if (parsed.agent) {
+            agentRole = parsed.agent.role as AgentRole;
+            setActiveAgent(agentRole);
+            onChunk('', agentRole);
+            continue;
+          }
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) { assistantSoFar += content; onChunk(assistantSoFar, agentRole); }
         } catch {
