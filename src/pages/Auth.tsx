@@ -83,11 +83,3 @@ export default function Auth() {
     </div>
   );
 }
-          >
-            {isLogin ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
