@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, BarChart3, CheckSquare, UtensilsCrossed } from 'lucide-react';
+import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell } from 'lucide-react';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import Checklist from './Checklist';
@@ -7,7 +7,7 @@ import FoodDiary from './FoodDiary';
 
 const tabs = [
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
-  { id: 'food', label: 'Еда', icon: UtensilsCrossed },
+  { id: 'food', label: 'Еда & Спорт', icon: Dumbbell },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
   { id: 'checklist', label: 'Чеклист', icon: CheckSquare },
 ] as const;

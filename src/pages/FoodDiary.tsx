@@ -3,6 +3,7 @@ import { Plus, Trash2, History } from 'lucide-react';
 import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import FoodHistory from './FoodHistory';
+import ExerciseTracker from '@/components/ExerciseTracker';
 
 const meals = [
   { id: 'breakfast' as const, label: '🌅 Завтрак' },
@@ -244,6 +245,9 @@ export default function FoodDiary() {
           </div>
         );
       })}
+
+      {/* Exercise Tracker */}
+      <ExerciseTracker />
     </div>
   );
 }
