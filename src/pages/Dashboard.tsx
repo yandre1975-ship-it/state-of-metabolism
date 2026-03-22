@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets } from 'lucide-react';
+import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
   green: { bg: 'bg-status-green-bg', border: 'border-status-green/30', text: 'text-status-green', icon: '🔥' },
