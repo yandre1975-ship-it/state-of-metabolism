@@ -25,8 +25,17 @@ export default function WeeklyReview() {
   const avgActivity = Math.round(avg(last7.map(e => e.activity)));
   const proteinDays = last7.filter(e => e.protein).length;
 
+  // Sleep
+  const sleepData = last7.map(e => e.sleepHours || 0);
+  const sleepWithData = sleepData.filter(h => h > 0);
+  const avgSleep = sleepWithData.length > 0 ? round(avg(sleepWithData), 1) : null;
+  const qualityData = last7.map(e => e.sleepQuality || 0);
+  const qualityWithData = qualityData.filter(q => q > 0);
+  const avgQuality = qualityWithData.length > 0 ? round(avg(qualityWithData), 1) : null;
+  const qualityLabels: Record<number, string> = { 1: 'Ужасно', 2: 'Плохо', 3: 'Нормально', 4: 'Хорошо', 5: 'Отлично' };
+
   // Generate insight
-  const insight = generateInsight(last7, weightDelta, avgHunger, avgEnergy, profile);
+  const insight = generateInsight(last7, weightDelta, avgHunger, avgEnergy, avgSleep, avgQuality, profile);
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
