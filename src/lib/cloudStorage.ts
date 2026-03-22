@@ -56,6 +56,7 @@ export async function getCloudEntries(): Promise<DailyEntry[]> {
     coffee: d.coffee,
     protein: d.protein,
     activity: d.activity,
+    water: (d as any).water ?? 0,
   }));
 }
 
