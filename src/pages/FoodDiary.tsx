@@ -85,6 +85,8 @@ export default function FoodDiary() {
     save([...food.items, item]);
   };
 
+  const remove = (id: string) => save(food.items.filter(i => i.id !== id));
+
   // History is now in a separate tab (HistoryDiary)
 
   return (
