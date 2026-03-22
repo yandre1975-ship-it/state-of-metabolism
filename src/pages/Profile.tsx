@@ -136,6 +136,33 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Activity Level */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center gap-2 text-muted-foreground mb-3">
+          <span className="text-xs font-medium uppercase tracking-wide">Уровень активности</span>
+        </div>
+        <div className="space-y-2">
+          {([
+            { value: 'sedentary' as const, label: '🪑 Сидячий', desc: 'Офис, мало движения' },
+            { value: 'light' as const, label: '🚶 Лёгкая', desc: '1–2 прогулки в неделю' },
+            { value: 'moderate' as const, label: '🏃 Умеренная', desc: '3–4 тренировки в неделю' },
+            { value: 'active' as const, label: '💪 Высокая', desc: 'Ежедневные тренировки' },
+          ]).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => update({ activityLevel: opt.value })}
+              className={`w-full text-left p-4 rounded-xl transition-all duration-150 active:scale-[0.98]
+                ${profile.activityLevel === opt.value
+                  ? 'bg-foreground text-background shadow-md'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
+            >
+              <span className="text-sm font-medium">{opt.label}</span>
+              <span className={`text-xs block mt-0.5 ${profile.activityLevel === opt.value ? 'opacity-70' : 'text-muted-foreground'}`}>{opt.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Target Weight & Date */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
