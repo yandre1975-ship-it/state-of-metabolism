@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
-import { getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
+import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import { generateRecommendations } from '@/lib/recommendations';
 import ExerciseTracker from '@/components/ExerciseTracker';
