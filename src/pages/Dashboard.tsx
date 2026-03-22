@@ -97,6 +97,7 @@ export default function Dashboard() {
             className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40"
           />
         </Card>
+      </div>
 
       {/* Coffee */}
       <Card icon={<Coffee size={16} />} label={`Кофе: ${entry.coffee} чашек`}>
