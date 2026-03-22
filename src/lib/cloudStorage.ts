@@ -93,7 +93,7 @@ export async function getAllCloudFood(): Promise<DailyFood[]> {
 
   return (data || []).map(d => ({
     date: d.date,
-    items: d.items as DailyFood['items'] || [],
+    items: (d.items as unknown as DailyFood['items']) || [],
   }));
 }
 
