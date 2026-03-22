@@ -5,11 +5,12 @@ import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import FoodHistory from './FoodHistory';
 import ExerciseTracker from '@/components/ExerciseTracker';
 
-const meals = [
-  { id: 'breakfast' as const, label: '🌅 Завтрак' },
-  { id: 'lunch' as const, label: '☀️ Обед' },
-  { id: 'dinner' as const, label: '🌙 Ужин' },
-  { id: 'snack' as const, label: '🍎 Перекус' },
+// Day schedule: meal → exercise block pairs
+const daySchedule = [
+  { meal: { id: 'breakfast' as const, label: '🌅 Завтрак' }, exercise: 'morning' as const },
+  { meal: { id: 'lunch' as const, label: '☀️ Обед' }, exercise: 'afternoon' as const },
+  { meal: { id: 'dinner' as const, label: '🌙 Ужин' }, exercise: 'evening' as const },
+  { meal: { id: 'snack' as const, label: '🍎 Перекус' }, exercise: null },
 ];
 
 export default function FoodDiary() {
