@@ -15,12 +15,12 @@ import Auth from './Auth';
 import ProUpgrade, { ProGate } from '@/components/ProUpgrade';
 
 const tabs = [
+  { id: 'profile', label: 'Профиль', icon: User },
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
   { id: 'food', label: 'Дневник', icon: Dumbbell },
   { id: 'chat', label: 'AI Коуч', icon: MessageCircle },
   { id: 'weekly', label: 'Неделя', icon: CalendarDays, proFeature: 'weeklyReview' as const },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
-  { id: 'profile', label: 'Профиль', icon: User },
 ] as const;
 
 type Tab = typeof tabs[number]['id'];
