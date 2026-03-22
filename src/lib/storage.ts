@@ -12,6 +12,7 @@ export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'h
 export type Goal = 'lose' | 'maintain' | 'gain';
 
 export interface UserProfile {
+  name: string;
   sex: 'male' | 'female';
   age: number;
   height: number; // cm
