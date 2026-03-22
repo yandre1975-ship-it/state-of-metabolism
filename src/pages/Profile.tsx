@@ -4,6 +4,7 @@ import { saveCloudProfile } from '@/lib/cloudStorage';
 import { useAuth } from '@/contexts/AuthContext';
 import { Check, User, Target, LogOut } from 'lucide-react';
 import NotificationSettings from '@/components/NotificationSettings';
+import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
   { id: 'insulin_resistance', label: 'Инсулинорезистентность', description: 'Снижает углеводы, увеличивает белок и жиры' },
@@ -41,6 +42,9 @@ export default function Profile() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* AI Risk Warnings */}
+      <AgentInsightBanner tab="profile" />
+
       {/* Name */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
