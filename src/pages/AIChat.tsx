@@ -106,7 +106,8 @@ function buildProactivePrompt(): string {
   return parts.join(' ');
 }
 
-export default function AIChat() {
+export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => void } = {}) {
+  const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
