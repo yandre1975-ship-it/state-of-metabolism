@@ -191,3 +191,26 @@ export function calcMacroTargets(weight: number | null, activityMin: number) {
 
   return { calories: Math.max(totalCal, 1200), protein: proteinG, carbs: carbsG, fat: fatG };
 }
+
+// ── Exercises ──
+
+export function getTodayExercises(): DailyExercises {
+  const today = getToday();
+  try {
+    const all: DailyExercises[] = JSON.parse(localStorage.getItem(EXERCISE_KEY) || '[]');
+    const found = all.find(d => d.date === today);
+    if (found) return found;
+  } catch {}
+  return {
+    date: today,
+    items: DEFAULT_EXERCISES.map((e, i) => ({ ...e, id: String(i + 1), done: false })),
+  };
+}
+
+export function saveExercises(day: DailyExercises) {
+  try {
+    const all: DailyExercises[] = JSON.parse(localStorage.getItem(EXERCISE_KEY) || '[]').filter((d: DailyExercises) => d.date !== day.date);
+    all.push(day);
+    localStorage.setItem(EXERCISE_KEY, JSON.stringify(all));
+  } catch {}
+}
