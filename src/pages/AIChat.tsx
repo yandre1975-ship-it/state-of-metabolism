@@ -220,7 +220,7 @@ export default function AIChat() {
     try {
       const result = await streamAI(
         [...messages, userMsg],
-        (s) => upsertAssistant(s),
+        (s, a) => upsertAssistant(s, a),
         requestedAgent,
       );
       // Final update with agent info
