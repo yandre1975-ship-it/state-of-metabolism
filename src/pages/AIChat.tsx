@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Loader2, AlertCircle } from 'lucide-react';
-import { getTodayEntry, getProfile } from '@/lib/storage';
+import { getTodayEntry, getProfile, getStatus } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -8,11 +8,77 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-chat`;
 
 const QUICK_QUESTIONS = [
-  'Почему я голодный?',
-  'Что съесть на ужин?',
+  'Что мне сейчас съесть?',
+  'Как снизить голод?',
   'Почему вес стоит?',
-  'Как повысить энергию?',
+  'Дай совет на вечер',
 ];
+
+function getContext() {
+  const entry = getTodayEntry();
+  const profile = getProfile();
+  return {
+    weight: entry.weight,
+    hunger: entry.hunger,
+    energy: entry.energy,
+    coffee: entry.coffee,
+    protein: entry.protein,
+    activity: entry.activity,
+    goal: profile.goal,
+    conditions: profile.conditions,
+    name: profile.name,
+  };
+}
+
+/** Build a proactive prompt based on current user state */
+function buildProactivePrompt(): string {
+  const entry = getTodayEntry();
+  const profile = getProfile();
+  const { status } = getStatus(entry);
+  const hour = new Date().getHours();
+
+  const parts: string[] = [];
+
+  // Time-of-day awareness
+  if (hour < 11) {
+    parts.push('Сейчас утро.');
+  } else if (hour < 15) {
+    parts.push('Сейчас середина дня.');
+  } else if (hour < 19) {
+    parts.push('Сейчас вторая половина дня.');
+  } else {
+    parts.push('Сейчас вечер.');
+  }
+
+  // State-based proactive triggers
+  if (status === 'red') {
+    if (entry.hunger >= 4) {
+      parts.push('У пользователя высокий голод (4-5/5). Это риск переедания. Начни разговор с этого — предложи конкретное решение прямо сейчас.');
+    } else if (entry.energy <= 2) {
+      parts.push('У пользователя очень низкая энергия (1-2/5). Начни с поддержки и предложи что-то конкретное для восстановления.');
+    }
+  } else if (status === 'yellow') {
+    parts.push('Состояние пограничное. Дай 1-2 конкретных совета чтобы улучшить ситуацию.');
+  } else {
+    parts.push('Показатели хорошие. Похвали и дай один совет для закрепления результата.');
+  }
+
+  if (!entry.protein && hour > 10) {
+    parts.push('Белок ещё не отмечен — напомни о важности белка.');
+  }
+
+  if (entry.activity < 20 && hour > 14) {
+    parts.push('Активность пока низкая — мягко предложи движение.');
+  }
+
+  if (entry.coffee > 2) {
+    parts.push('Много кофе — упомяни кортизол.');
+  }
+
+  parts.push(`Начни разговор первым. Обратись по имени (${profile.name || 'друг'}). Будь кратким (2-4 предложения). Задай один вопрос в конце.`);
+
+  return parts.join(' ');
+}
 
 export default function AIChat() {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -20,10 +86,120 @@ export default function AIChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const greetedRef = useRef(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  const streamAI = useCallback(async (
+    allMessages: Msg[],
+    onChunk: (soFar: string) => void,
+  ) => {
+    const context = getContext();
+    const resp = await fetch(CHAT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: allMessages, context }),
+    });
+
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({ error: 'Ошибка сервера' }));
+      throw new Error(data.error || `Ошибка: ${resp.status}`);
+    }
+
+    if (!resp.body) throw new Error('Нет ответа от сервера');
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = '';
+    let assistantSoFar = '';
+    let streamDone = false;
+
+    while (!streamDone) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.startsWith(':') || line.trim() === '') continue;
+        if (!line.startsWith('data: ')) continue;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') { streamDone = true; break; }
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) { assistantSoFar += content; onChunk(assistantSoFar); }
+        } catch {
+          textBuffer = line + '\n' + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Final flush
+    if (textBuffer.trim()) {
+      for (let raw of textBuffer.split('\n')) {
+        if (!raw) continue;
+        if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+        if (raw.startsWith(':') || raw.trim() === '') continue;
+        if (!raw.startsWith('data: ')) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) { assistantSoFar += content; onChunk(assistantSoFar); }
+        } catch { /* ignore */ }
+      }
+    }
+
+    return assistantSoFar;
+  }, []);
+
+  const upsertAssistant = useCallback((soFar: string) => {
+    setMessages(prev => {
+      const last = prev[prev.length - 1];
+      if (last?.role === 'assistant') {
+        return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: soFar } : m);
+      }
+      return [...prev, { role: 'assistant', content: soFar }];
+    });
+  }, []);
+
+  // Proactive greeting on first open
+  useEffect(() => {
+    if (greetedRef.current) return;
+    greetedRef.current = true;
+
+    const greet = async () => {
+      setIsLoading(true);
+      try {
+        const proactivePrompt = buildProactivePrompt();
+        // Send as a hidden system-like user message that the AI responds to
+        const initMessages: Msg[] = [
+          { role: 'user', content: proactivePrompt },
+        ];
+        await streamAI(initMessages, upsertAssistant);
+      } catch (e) {
+        console.error('Proactive greeting error:', e);
+        // Fallback static greeting
+        setMessages([{
+          role: 'assistant',
+          content: `Привет, ${getProfile().name || 'друг'}! 👋 Я ваш AI-коуч по здоровью. Как вы себя сегодня чувствуете?`,
+        }]);
+      }
+      setIsLoading(false);
+    };
+    greet();
+  }, [streamAI, upsertAssistant]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -34,121 +210,14 @@ export default function AIChat() {
     setInput('');
     setIsLoading(true);
 
-    // Gather context
-    const entry = getTodayEntry();
-    const profile = getProfile();
-    const context = {
-      weight: entry.weight,
-      hunger: entry.hunger,
-      energy: entry.energy,
-      coffee: entry.coffee,
-      protein: entry.protein,
-      activity: entry.activity,
-      goal: profile.goal,
-      conditions: profile.conditions,
-    };
-
-    let assistantSoFar = '';
-
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMsg],
-          context,
-        }),
-      });
-
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({ error: 'Ошибка сервера' }));
-        setError(data.error || `Ошибка: ${resp.status}`);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!resp.body) {
-        setError('Нет ответа от сервера');
-        setIsLoading(false);
-        return;
-      }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-      let streamDone = false;
-
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') {
-            streamDone = true;
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === 'assistant') {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
-                }
-                return [...prev, { role: 'assistant', content: assistantSoFar }];
-              });
-            }
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Final flush
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw) continue;
-          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
-          if (raw.startsWith(':') || raw.trim() === '') continue;
-          if (!raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === 'assistant') {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
-                }
-                return [...prev, { role: 'assistant', content: assistantSoFar }];
-              });
-            }
-          } catch { /* ignore */ }
-        }
-      }
-    } catch (e) {
+      await streamAI(
+        [...messages, userMsg],
+        upsertAssistant,
+      );
+    } catch (e: any) {
       console.error('Chat error:', e);
-      setError('Не удалось подключиться к AI');
+      setError(e.message || 'Не удалось подключиться к AI');
     }
 
     setIsLoading(false);
@@ -158,7 +227,7 @@ export default function AIChat() {
     <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-300">
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pb-4">
-        {messages.length === 0 && (
+        {messages.length === 0 && !isLoading && (
           <div className="text-center pt-12 space-y-6">
             <div className="w-14 h-14 rounded-2xl bg-foreground text-background flex items-center justify-center mx-auto">
               <Bot size={28} />
@@ -166,16 +235,8 @@ export default function AIChat() {
             <div>
               <h3 className="font-semibold text-lg">AI Health Coach</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-[260px] mx-auto leading-relaxed">
-                Задайте вопрос о питании, весе или самочувствии — я отвечу с учётом ваших данных.
+                Подключаемся...
               </p>
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center px-4">
-              {QUICK_QUESTIONS.map(q => (
-                <button key={q} onClick={() => sendMessage(q)}
-                  className="px-3 py-2 rounded-xl bg-card border text-xs font-medium active:scale-95 transition-all hover:bg-secondary">
-                  {q}
-                </button>
-              ))}
             </div>
           </div>
         )}
@@ -225,6 +286,18 @@ export default function AIChat() {
           </div>
         )}
       </div>
+
+      {/* Quick questions after greeting */}
+      {messages.length === 1 && messages[0].role === 'assistant' && !isLoading && (
+        <div className="flex flex-wrap gap-2 pb-3 px-1">
+          {QUICK_QUESTIONS.map(q => (
+            <button key={q} onClick={() => sendMessage(q)}
+              className="px-3 py-2 rounded-xl bg-card border text-xs font-medium active:scale-95 transition-all hover:bg-secondary">
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input */}
       <div className="flex gap-2 pt-3 border-t">
