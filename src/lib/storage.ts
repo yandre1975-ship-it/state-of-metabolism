@@ -29,9 +29,33 @@ export interface DailyFood {
   items: FoodItem[];
 }
 
+export interface ExerciseEntry {
+  id: string;
+  name: string;
+  reps?: number;
+  sets?: number;
+  minutes?: number;
+  done: boolean;
+}
+
+export interface DailyExercises {
+  date: string;
+  items: ExerciseEntry[];
+}
+
 const ENTRIES_KEY = 'metabolic_entries';
 const CHECKLIST_KEY = 'metabolic_checklist';
 const FOOD_KEY = 'metabolic_food';
+const EXERCISE_KEY = 'metabolic_exercises';
+
+const DEFAULT_EXERCISES: Omit<ExerciseEntry, 'id' | 'done'>[] = [
+  { name: 'Отжимания', reps: 20, sets: 3 },
+  { name: 'Приседания', reps: 20, sets: 3 },
+  { name: 'Планка', minutes: 1 },
+  { name: 'Скручивания', reps: 15, sets: 3 },
+  { name: 'Выпады', reps: 12, sets: 3 },
+  { name: 'Берпи', reps: 10, sets: 2 },
+];
 
 export function getToday(): string {
   return new Date().toISOString().slice(0, 10);
