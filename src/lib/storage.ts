@@ -60,6 +60,18 @@ const CHECKLIST_KEY = 'metabolic_checklist';
 const FOOD_KEY = 'metabolic_food';
 const EXERCISE_KEY = 'metabolic_exercises';
 
+export function getProfile(): UserProfile {
+  try {
+    const stored = localStorage.getItem(PROFILE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return { sex: 'male', age: 30, height: 170, conditions: [] };
+}
+
+export function saveProfile(profile: UserProfile) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+}
+
 const DEFAULT_EXERCISES: Omit<ExerciseEntry, 'id' | 'done'>[] = [
   // Утро (после завтрака)
   { name: 'Планка', minutes: 1, slot: 'morning' },
