@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Activity, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
+import { Activity, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon, Coffee } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
@@ -98,6 +98,22 @@ export default function Dashboard() {
           />
         </Card>
       </div>
+
+      {/* Coffee */}
+      <Card icon={<Coffee size={16} />} label={`Кофе: ${entry.coffee} чашек`}>
+        <div className="flex gap-2">
+          {[0, 1, 2, 3, 4, 5].map(n => (
+            <button key={n} onClick={() => update({ coffee: n })}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
+                ${entry.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        {entry.coffee > 2 && (
+          <p className="text-[10px] text-status-yellow mt-2">⚠️ Более 2 чашек может влиять на сон и аппетит</p>
+        )}
+      </Card>
 
       {/* Hunger */}
       <Card icon={<Flame size={16} />} label={`Голод: ${entry.hunger}/5`}>

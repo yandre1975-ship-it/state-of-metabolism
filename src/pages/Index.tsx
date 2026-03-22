@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2 } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2, BookOpen } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,7 @@ import { migrateLocalToCloud, getCloudProfile } from '@/lib/cloudStorage';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import FoodDiary from './FoodDiary';
+import HistoryDiary from './HistoryDiary';
 import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
 import AIChat from './AIChat';
@@ -17,7 +18,7 @@ import ProUpgrade, { ProGate } from '@/components/ProUpgrade';
 const tabs = [
   { id: 'profile', label: 'Профиль', icon: User },
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
-  { id: 'food', label: 'Дневник', icon: Dumbbell },
+  { id: 'food', label: 'Дневник', icon: BookOpen },
   { id: 'chat', label: 'AI Коуч', icon: MessageCircle },
   { id: 'weekly', label: 'Неделя', icon: CalendarDays, proFeature: 'weeklyReview' as const },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
@@ -90,8 +91,8 @@ export default function Index() {
 
   const renderTab = () => {
     switch (tab) {
-      case 'dashboard': return <Dashboard />;
-      case 'food': return <FoodDiary />;
+      case 'dashboard': return <><Dashboard /><div className="mt-6"><FoodDiary /></div></>;
+      case 'food': return <HistoryDiary />;
       case 'chat': return <AIChat onNavigateToFood={() => setTab('food')} />;
       case 'weekly':
         return canAccess('weeklyReview')

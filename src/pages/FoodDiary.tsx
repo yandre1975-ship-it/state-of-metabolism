@@ -1,11 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, History, Crown, Lightbulb, ChevronDown, ChevronUp, Coffee } from 'lucide-react';
-import AgentInsightBanner from '@/components/AgentInsightBanner';
-import { getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
+import { Plus, Trash2, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
+import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
-import { canAccess } from '@/lib/premium';
 import { generateRecommendations } from '@/lib/recommendations';
-import FoodHistory from './FoodHistory';
 import ExerciseTracker from '@/components/ExerciseTracker';
 
 // Day schedule: meal → snack → exercise, repeating
@@ -16,16 +13,7 @@ const mealSlots = [
 ];
 
 export default function FoodDiary() {
-  const [entry, setEntry] = useState<DailyEntry>(getTodayEntry);
-  const updateEntry = (patch: Partial<DailyEntry>) => {
-    setEntry(prev => {
-      const next = { ...prev, ...patch };
-      saveEntry(next);
-      return next;
-    });
-  };
-  const entryData = entry;
-  const [showHistory, setShowHistory] = useState(false);
+  const entry = getTodayEntry();
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
   const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
@@ -87,27 +75,15 @@ export default function FoodDiary() {
 
   const remove = (id: string) => save(food.items.filter(i => i.id !== id));
 
-  if (showHistory) return <FoodHistory onBack={() => setShowHistory(false)} />;
+  // History is now in a separate tab (HistoryDiary)
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* AI Agent Insights */}
-      <AgentInsightBanner tab="food" />
 
       {/* Macro Summary */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h3 className="font-semibold">Дневная норма</h3>
-          {canAccess('foodHistory') ? (
-            <button onClick={() => setShowHistory(true)}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors active:scale-95">
-              <History size={14} /> История
-            </button>
-          ) : (
-            <span className="flex items-center gap-1 text-[10px] text-status-yellow">
-              <Crown size={10} /> Pro
-            </span>
-          )}
         </div>
         <div className="grid grid-cols-4 gap-3">
           <MacroRing label="Нетто" current={netCalories} target={targets.calories} unit="" color="var(--foreground)" />
@@ -142,29 +118,6 @@ export default function FoodDiary() {
         <p className="text-[11px] text-muted-foreground">
           Сожгите ~{recs.exerciseTotalBurn} ккал упражнениями сегодня для оптимального баланса
         </p>
-      </div>
-
-      {/* Coffee Tracker */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Coffee size={16} className="text-muted-foreground" />
-            <span className="font-semibold text-sm">Кофе</span>
-          </div>
-          <span className="text-xs text-muted-foreground tabular-nums">{entryData.coffee} чашек</span>
-        </div>
-        <div className="flex gap-2">
-          {[0, 1, 2, 3, 4, 5].map(n => (
-            <button key={n} onClick={() => updateEntry({ coffee: n })}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-                ${entryData.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
-              {n}
-            </button>
-          ))}
-        </div>
-        {entryData.coffee > 2 && (
-          <p className="text-[10px] text-status-yellow mt-2">⚠️ Более 2 чашек может влиять на сон и аппетит</p>
-        )}
       </div>
 
       {/* Interleaved: meal → recommendations → snack → exercises */}
