@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getTodayEntry, saveEntry, getStatus, getInsights, type DailyEntry, type Status } from '@/lib/storage';
-import { Activity, Coffee, Flame, Zap, Drumstick, Scale } from 'lucide-react';
+import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
+import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
+import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle } from 'lucide-react';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
   green: { bg: 'bg-status-green-bg', border: 'border-status-green/30', text: 'text-status-green', icon: '🔥' },
@@ -10,45 +11,80 @@ const statusConfig: Record<Status, { bg: string; border: string; text: string; i
 
 export default function Dashboard() {
   const [entry, setEntry] = useState<DailyEntry>(getTodayEntry);
+  const profile = getProfile();
 
   useEffect(() => { saveEntry(entry); }, [entry]);
 
   const update = (patch: Partial<DailyEntry>) => setEntry(prev => ({ ...prev, ...patch }));
   const { status, message } = getStatus(entry);
   const cfg = statusConfig[status];
-  const insights = getInsights(entry);
+  const plan = generateDailyPlan(entry, profile);
+  const warnings = getAdaptationWarnings(profile);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-5 animate-in fade-in duration-500">
+      {/* Greeting */}
+      {profile.name && (
+        <p className="text-muted-foreground text-sm">Привет, <span className="font-semibold text-foreground">{profile.name}</span> 👋</p>
+      )}
+
       {/* Status Card */}
-      <div className={`rounded-2xl border-2 ${cfg.border} ${cfg.bg} p-6 transition-colors duration-300`}>
+      <div className={`rounded-2xl border-2 ${cfg.border} ${cfg.bg} p-5 transition-colors duration-300`}>
         <div className="flex items-center gap-3">
           <span className="text-3xl">{cfg.icon}</span>
           <div>
-            <p className={`text-xl font-semibold ${cfg.text}`}>{message}</p>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className={`text-lg font-semibold ${cfg.text}`}>{message}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {status === 'green' ? 'Все показатели в норме' : status === 'red' ? 'Требуется внимание' : 'Есть что улучшить'}
             </p>
           </div>
         </div>
       </div>
 
+      {/* Daily Plan */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Target size={16} className="text-foreground" />
+          <h3 className="font-semibold text-sm">План на сегодня</h3>
+        </div>
+        <ul className="space-y-2">
+          {plan.actions.map((action, i) => (
+            <li key={i} className="text-sm leading-relaxed p-3 rounded-xl bg-secondary">
+              {action}
+            </li>
+          ))}
+        </ul>
+        {plan.risk && (
+          <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-status-red-bg">
+            <AlertTriangle size={14} className="text-status-red flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-status-red">{plan.risk}</p>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground mt-3 leading-relaxed">💡 {plan.insight}</p>
+      </div>
+
+      {/* Adaptation Warnings */}
+      {warnings.length > 0 && (
+        <div className="rounded-2xl border border-status-yellow/30 bg-status-yellow-bg p-4">
+          <p className="text-xs font-medium text-status-yellow mb-2">🔄 Адаптация</p>
+          {warnings.map((w, i) => (
+            <p key={i} className="text-xs text-muted-foreground">{w}</p>
+          ))}
+        </div>
+      )}
+
       {/* Input Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Weight */}
-        <Card icon={<Scale size={18} />} label="Вес (кг)">
+      <div className="grid grid-cols-2 gap-3">
+        <Card icon={<Scale size={16} />} label="Вес (кг)">
           <input
-            type="number"
-            step="0.1"
+            type="number" step="0.1"
             value={entry.weight ?? ''}
             onChange={e => update({ weight: e.target.value ? Number(e.target.value) : null })}
             placeholder="—"
             className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40"
           />
         </Card>
-
-        {/* Activity */}
-        <Card icon={<Activity size={18} />} label="Активность (мин)">
+        <Card icon={<Activity size={16} />} label="Активность (мин)">
           <input
             type="number"
             value={entry.activity || ''}
@@ -59,42 +95,33 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Hunger Slider */}
-      <Card icon={<Flame size={18} />} label={`Голод: ${entry.hunger}/5`}>
-        <input
-          type="range" min={1} max={5} value={entry.hunger}
+      {/* Hunger */}
+      <Card icon={<Flame size={16} />} label={`Голод: ${entry.hunger}/5`}>
+        <input type="range" min={1} max={5} value={entry.hunger}
           onChange={e => update({ hunger: Number(e.target.value) })}
-          className="w-full accent-foreground h-2 rounded-full cursor-pointer"
-        />
+          className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>Нет</span><span>Сильный</span>
         </div>
       </Card>
 
-      {/* Energy Slider */}
-      <Card icon={<Zap size={18} />} label={`Энергия: ${entry.energy}/5`}>
-        <input
-          type="range" min={1} max={5} value={entry.energy}
+      {/* Energy */}
+      <Card icon={<Zap size={16} />} label={`Энергия: ${entry.energy}/5`}>
+        <input type="range" min={1} max={5} value={entry.energy}
           onChange={e => update({ energy: Number(e.target.value) })}
-          className="w-full accent-foreground h-2 rounded-full cursor-pointer"
-        />
+          className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>Низкая</span><span>Высокая</span>
         </div>
       </Card>
 
       {/* Coffee */}
-      <Card icon={<Coffee size={18} />} label="Кофе">
+      <Card icon={<Coffee size={16} />} label="Кофе">
         <div className="flex gap-2">
           {[0, 1, 2, 3].map(n => (
-            <button
-              key={n}
-              onClick={() => update({ coffee: n })}
+            <button key={n} onClick={() => update({ coffee: n })}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-                ${entry.coffee === n
-                  ? 'bg-foreground text-background shadow-md'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
-            >
+                ${entry.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
               {n}
             </button>
           ))}
@@ -102,28 +129,19 @@ export default function Dashboard() {
       </Card>
 
       {/* Protein */}
-      <Card icon={<Drumstick size={18} />} label="Белок в рационе">
-        <button
-          onClick={() => update({ protein: !entry.protein })}
+      <Card icon={<Drumstick size={16} />} label="Белок в рационе">
+        <button onClick={() => update({ protein: !entry.protein })}
           className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-            ${entry.protein
-              ? 'bg-status-green text-white shadow-md'
-              : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
-        >
+            ${entry.protein ? 'bg-status-green text-white shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
           {entry.protein ? '✓ Да' : 'Нет'}
         </button>
       </Card>
 
-      {/* Insights */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
-        <h3 className="font-semibold mb-3">💡 Рекомендации</h3>
-        <ul className="space-y-2">
-          {insights.map((tip, i) => (
-            <li key={i} className="text-sm text-muted-foreground leading-relaxed pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-foreground/30">
-              {tip}
-            </li>
-          ))}
-        </ul>
+      {/* Safety */}
+      <div className="rounded-2xl bg-secondary/50 p-4">
+        <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+          ⚠️ Не является медицинской рекомендацией. При наличии симптомов обратитесь к врачу.
+        </p>
       </div>
     </div>
   );
@@ -131,10 +149,10 @@ export default function Dashboard() {
 
 function Card({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-card border p-5 shadow-sm">
+    <div className="rounded-2xl bg-card border p-4 shadow-sm">
       <div className="flex items-center gap-2 text-muted-foreground mb-3">
         {icon}
-        <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
       </div>
       {children}
     </div>
