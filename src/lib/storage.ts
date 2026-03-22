@@ -14,8 +14,24 @@ export interface ChecklistItem {
   checked: boolean;
 }
 
+export interface FoodItem {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  meal: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+}
+
+export interface DailyFood {
+  date: string;
+  items: FoodItem[];
+}
+
 const ENTRIES_KEY = 'metabolic_entries';
 const CHECKLIST_KEY = 'metabolic_checklist';
+const FOOD_KEY = 'metabolic_food';
 
 export function getToday(): string {
   return new Date().toISOString().slice(0, 10);
@@ -96,4 +112,44 @@ export function getInsights(entry: DailyEntry): string[] {
   if (entry.activity < 20) tips.push('Даже 20 минут ходьбы значительно улучшают метаболизм.');
   if (tips.length === 0) tips.push('Отличные показатели! Продолжайте в том же духе.');
   return tips;
+}
+
+// ── Food diary ──
+
+export function getTodayFood(): DailyFood {
+  const today = getToday();
+  try {
+    const all: DailyFood[] = JSON.parse(localStorage.getItem(FOOD_KEY) || '[]');
+    return all.find(d => d.date === today) || { date: today, items: [] };
+  } catch { return { date: today, items: [] }; }
+}
+
+export function saveDailyFood(day: DailyFood) {
+  try {
+    const all: DailyFood[] = JSON.parse(localStorage.getItem(FOOD_KEY) || '[]').filter((d: DailyFood) => d.date !== day.date);
+    all.push(day);
+    all.sort((a, b) => a.date.localeCompare(b.date));
+    localStorage.setItem(FOOD_KEY, JSON.stringify(all));
+  } catch {}
+}
+
+/**
+ * Calculate daily macro targets based on weight (kg) and activity (min).
+ * Uses Mifflin-St Jeor BMR estimate (male default) + activity factor.
+ */
+export function calcMacroTargets(weight: number | null, activityMin: number) {
+  const w = weight || 75;
+  // Simplified BMR ≈ 10 * weight + 600 (rough mid estimate)
+  const bmr = 10 * w + 600;
+  // Activity calories: ~5 kcal per minute of moderate activity
+  const activityCal = activityMin * 5;
+  // Slight deficit for fat loss
+  const totalCal = Math.round(bmr + activityCal - 300);
+
+  // Macro split: 30% protein, 40% carbs, 30% fat
+  const proteinG = Math.round((totalCal * 0.3) / 4);
+  const carbsG = Math.round((totalCal * 0.4) / 4);
+  const fatG = Math.round((totalCal * 0.3) / 9);
+
+  return { calories: Math.max(totalCal, 1200), protein: proteinG, carbs: carbsG, fat: fatG };
 }

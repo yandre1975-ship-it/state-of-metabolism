@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { LayoutDashboard, BarChart3, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, BarChart3, CheckSquare, UtensilsCrossed } from 'lucide-react';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import Checklist from './Checklist';
+import FoodDiary from './FoodDiary';
 
 const tabs = [
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
+  { id: 'food', label: 'Еда', icon: UtensilsCrossed },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
   { id: 'checklist', label: 'Чеклист', icon: CheckSquare },
 ] as const;
@@ -17,19 +19,17 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b px-4 py-4">
         <h1 className="text-lg font-bold tracking-tight">Metabolic Dashboard</h1>
       </header>
 
-      {/* Content */}
       <main className="max-w-lg mx-auto px-4 py-6 pb-24">
         {tab === 'dashboard' && <Dashboard />}
+        {tab === 'food' && <FoodDiary />}
         {tab === 'charts' && <Charts />}
         {tab === 'checklist' && <Checklist />}
       </main>
 
-      {/* Bottom Nav */}
       <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-lg border-t z-10">
         <div className="max-w-lg mx-auto flex">
           {tabs.map(t => (
