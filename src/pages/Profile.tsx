@@ -36,6 +36,22 @@ export default function Profile() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Name */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center gap-2 text-muted-foreground mb-3">
+          <User size={16} />
+          <span className="text-xs font-medium uppercase tracking-wide">Имя</span>
+        </div>
+        <input
+          type="text"
+          value={nameStr}
+          onChange={e => setNameStr(e.target.value)}
+          onBlur={() => update({ name: nameStr.trim() })}
+          placeholder="Введите ваше имя"
+          className="w-full bg-transparent text-xl font-semibold outline-none border-b border-input pb-1 placeholder:text-muted-foreground/40"
+        />
+      </div>
+
       {/* Sex */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
