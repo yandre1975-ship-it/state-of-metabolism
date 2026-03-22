@@ -15,6 +15,8 @@ export default function Profile() {
   const [ageStr, setAgeStr] = useState(String(profile.age));
   const [heightStr, setHeightStr] = useState(String(profile.height));
   const [weightStr, setWeightStr] = useState(String(profile.weight));
+  const [targetWeightStr, setTargetWeightStr] = useState(String(profile.targetWeight || ''));
+  const [targetDate, setTargetDate] = useState(profile.targetDate || '');
 
   const update = (patch: Partial<UserProfile>) => {
     const next = { ...profile, ...patch };
