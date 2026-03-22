@@ -91,8 +91,8 @@ export default function Index() {
 
   const renderTab = () => {
     switch (tab) {
-      case 'dashboard': return <Dashboard />;
-      case 'food': return <FoodDiary />;
+      case 'dashboard': return <><Dashboard /><div className="mt-6"><FoodDiary /></div></>;
+      case 'food': return <HistoryDiary />;
       case 'chat': return <AIChat onNavigateToFood={() => setTab('food')} />;
       case 'weekly':
         return canAccess('weeklyReview')
