@@ -13,6 +13,7 @@ export async function getCloudProfile(): Promise<UserProfile | null> {
     height: data.height,
     weight: Number(data.weight),
     goal: data.goal as UserProfile['goal'],
+    activityLevel: (data.activity_level || 'light') as UserProfile['activityLevel'],
     conditions: (data.conditions || []) as UserProfile['conditions'],
     targetWeight: data.target_weight ? Number(data.target_weight) : undefined,
     targetDate: data.target_date || undefined,
