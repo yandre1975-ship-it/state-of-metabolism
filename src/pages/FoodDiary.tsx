@@ -90,6 +90,17 @@ export default function FoodDiary() {
           <span>—</span>
           <span className="text-status-green">Сожжено: {burned} ккал</span>
         </div>
+        {(() => {
+          const deficit = calcDailyDeficit(profile);
+          if (!deficit) return null;
+          return (
+            <div className="mt-3 p-3 rounded-xl bg-secondary text-center">
+              <p className="text-[11px] text-muted-foreground">Для цели нужен дефицит</p>
+              <p className="text-lg font-bold tabular-nums">{deficit.dailyDeficit} <span className="text-xs font-normal text-muted-foreground">ккал/день</span></p>
+              <p className="text-[11px] text-muted-foreground">{deficit.kgToLose} кг за {deficit.daysLeft} дней</p>
+            </div>
+          );
+        })()}
         {!entry.weight && (
           <p className="text-xs text-muted-foreground mt-2 text-center">
             Укажите вес на вкладке «Сегодня» для точного расчёта
