@@ -92,7 +92,6 @@ export default function Index() {
     switch (tab) {
       case 'dashboard': return <Dashboard />;
       case 'food': return <FoodDiary />;
-      case 'food': return <HistoryDiary />;
       case 'chat': return <AIChat onNavigateToFood={() => setTab('food')} />;
       case 'weekly':
         return canAccess('weeklyReview')
