@@ -85,170 +85,173 @@ export default function FoodDiary() {
         )}
       </div>
 
-      {/* Meals */}
-      {meals.map(meal => {
+      {/* Interleaved meals & exercises */}
+      {daySchedule.map(({ meal, exercise }) => {
         const items = food.items.filter(i => i.meal === meal.id);
         const mealCal = items.reduce((s, i) => s + i.calories, 0);
         return (
-          <div key={meal.id} className="rounded-2xl bg-card border p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">{meal.label}</h3>
-              <div className="flex items-center gap-3">
-                {mealCal > 0 && <span className="text-xs text-muted-foreground tabular-nums">{mealCal} ккал</span>}
-                <button
-                  onClick={() => { setAdding(adding === meal.id ? null : meal.id); setForm({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' }); setBasePer100(null); }}
-                  className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/70 transition-colors active:scale-95"
-                >
-                  <Plus size={16} />
-                </button>
+          <div key={meal.id} className="space-y-3">
+            {/* Meal card */}
+            <div className="rounded-2xl bg-card border p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">{meal.label}</h3>
+                <div className="flex items-center gap-3">
+                  {mealCal > 0 && <span className="text-xs text-muted-foreground tabular-nums">{mealCal} ккал</span>}
+                  <button
+                    onClick={() => { setAdding(adding === meal.id ? null : meal.id); setForm({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' }); setBasePer100(null); }}
+                    className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/70 transition-colors active:scale-95"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
               </div>
+
+              {items.length === 0 && adding !== meal.id && (
+                <p className="text-sm text-muted-foreground/50">Пока пусто</p>
+              )}
+
+              {items.map(item => (
+                <div key={item.id} className="flex items-center justify-between py-2.5 border-b last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-xs text-muted-foreground tabular-nums">
+                      {item.calories} ккал · Б{item.protein} · У{item.carbs} · Ж{item.fat}
+                    </p>
+                  </div>
+                  <button onClick={() => remove(item.id)} className="text-muted-foreground/40 hover:text-destructive transition-colors active:scale-95 p-1">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+
+              {/* Add form */}
+              {adding === meal.id && (
+                <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="relative" ref={suggestRef}>
+                    <input
+                      autoFocus
+                      placeholder="Название блюда"
+                      value={form.name}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setForm(f => ({ ...f, name: v }));
+                        const results = searchFoods(v);
+                        setSuggestions(results);
+                        setShowSuggestions(results.length > 0);
+                      }}
+                      onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                      className="w-full bg-secondary rounded-xl px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50"
+                    />
+                    {showSuggestions && (
+                      <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                        {suggestions.map((s, idx) => (
+                          <button
+                            key={idx}
+                            className="w-full text-left px-3 py-2.5 hover:bg-secondary/60 transition-colors border-b last:border-0"
+                            onMouseDown={e => {
+                              e.preventDefault();
+                              setBasePer100(s);
+                              setForm({
+                                name: s.name,
+                                grams: '100',
+                                calories: String(s.calories),
+                                protein: String(s.protein),
+                                carbs: String(s.carbs),
+                                fat: String(s.fat),
+                              });
+                              setShowSuggestions(false);
+                            }}
+                          >
+                            <p className="text-sm font-medium">{s.name}</p>
+                            <p className="text-[11px] text-muted-foreground tabular-nums">
+                              {s.calories} ккал · Б{s.protein} · У{s.carbs} · Ж{s.fat}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Portion weight */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Порция (г)</label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={form.grams}
+                        onChange={e => {
+                          const g = e.target.value;
+                          setForm(f => {
+                            const next = { ...f, grams: g };
+                            if (basePer100 && g) {
+                              const mult = Number(g) / 100;
+                              next.calories = String(Math.round(basePer100.calories * mult));
+                              next.protein = String(Math.round(basePer100.protein * mult * 10) / 10);
+                              next.carbs = String(Math.round(basePer100.carbs * mult * 10) / 10);
+                              next.fat = String(Math.round(basePer100.fat * mult * 10) / 10);
+                            }
+                            return next;
+                          });
+                        }}
+                        placeholder="100"
+                        className="w-full bg-secondary rounded-lg px-2 py-2 text-sm outline-none tabular-nums placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    {basePer100 && (
+                      <div className="flex gap-1 mt-4">
+                        {[50, 100, 150, 200].map(g => (
+                          <button
+                            key={g}
+                            onClick={() => {
+                              const mult = g / 100;
+                              setForm(f => ({
+                                ...f,
+                                grams: String(g),
+                                calories: String(Math.round(basePer100.calories * mult)),
+                                protein: String(Math.round(basePer100.protein * mult * 10) / 10),
+                                carbs: String(Math.round(basePer100.carbs * mult * 10) / 10),
+                                fat: String(Math.round(basePer100.fat * mult * 10) / 10),
+                              }));
+                            }}
+                            className={`px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95
+                              ${form.grams === String(g) ? 'bg-foreground text-background' : 'bg-secondary text-secondary-foreground'}`}
+                          >
+                            {g}г
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <NumInput label="Ккал" value={form.calories} onChange={v => setForm(f => ({ ...f, calories: v }))} />
+                    <NumInput label="Белки" value={form.protein} onChange={v => setForm(f => ({ ...f, protein: v }))} />
+                    <NumInput label="Углев." value={form.carbs} onChange={v => setForm(f => ({ ...f, carbs: v }))} />
+                    <NumInput label="Жиры" value={form.fat} onChange={v => setForm(f => ({ ...f, fat: v }))} />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={addItem}
+                      disabled={!form.name}
+                      className="flex-1 py-2.5 rounded-xl bg-foreground text-background text-sm font-medium transition-all active:scale-95 disabled:opacity-40"
+                    >
+                      Добавить
+                    </button>
+                    <button
+                      onClick={() => setAdding(null)}
+                      className="px-4 py-2.5 rounded-xl bg-secondary text-sm font-medium transition-all active:scale-95"
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {items.length === 0 && adding !== meal.id && (
-              <p className="text-sm text-muted-foreground/50">Пока пусто</p>
-            )}
-
-            {items.map(item => (
-              <div key={item.id} className="flex items-center justify-between py-2.5 border-b last:border-0">
-                <div>
-                  <p className="text-sm font-medium">{item.name}</p>
-                  <p className="text-xs text-muted-foreground tabular-nums">
-                    {item.calories} ккал · Б{item.protein} · У{item.carbs} · Ж{item.fat}
-                  </p>
-                </div>
-                <button onClick={() => remove(item.id)} className="text-muted-foreground/40 hover:text-destructive transition-colors active:scale-95 p-1">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-
-            {/* Add form */}
-            {adding === meal.id && (
-              <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="relative" ref={suggestRef}>
-                  <input
-                    autoFocus
-                    placeholder="Название блюда"
-                    value={form.name}
-                    onChange={e => {
-                      const v = e.target.value;
-                      setForm(f => ({ ...f, name: v }));
-                      const results = searchFoods(v);
-                      setSuggestions(results);
-                      setShowSuggestions(results.length > 0);
-                    }}
-                    onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
-                    className="w-full bg-secondary rounded-xl px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50"
-                  />
-                  {showSuggestions && (
-                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-                      {suggestions.map((s, idx) => (
-                        <button
-                          key={idx}
-                          className="w-full text-left px-3 py-2.5 hover:bg-secondary/60 transition-colors border-b last:border-0"
-                          onMouseDown={e => {
-                            e.preventDefault();
-                            setBasePer100(s);
-                            setForm({
-                              name: s.name,
-                              grams: '100',
-                              calories: String(s.calories),
-                              protein: String(s.protein),
-                              carbs: String(s.carbs),
-                              fat: String(s.fat),
-                            });
-                            setShowSuggestions(false);
-                          }}
-                        >
-                          <p className="text-sm font-medium">{s.name}</p>
-                          <p className="text-[11px] text-muted-foreground tabular-nums">
-                            {s.calories} ккал · Б{s.protein} · У{s.carbs} · Ж{s.fat}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {/* Portion weight */}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Порция (г)</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={form.grams}
-                      onChange={e => {
-                        const g = e.target.value;
-                        setForm(f => {
-                          const next = { ...f, grams: g };
-                          if (basePer100 && g) {
-                            const mult = Number(g) / 100;
-                            next.calories = String(Math.round(basePer100.calories * mult));
-                            next.protein = String(Math.round(basePer100.protein * mult * 10) / 10);
-                            next.carbs = String(Math.round(basePer100.carbs * mult * 10) / 10);
-                            next.fat = String(Math.round(basePer100.fat * mult * 10) / 10);
-                          }
-                          return next;
-                        });
-                      }}
-                      placeholder="100"
-                      className="w-full bg-secondary rounded-lg px-2 py-2 text-sm outline-none tabular-nums placeholder:text-muted-foreground/40"
-                    />
-                  </div>
-                  {basePer100 && (
-                    <div className="flex gap-1 mt-4">
-                      {[50, 100, 150, 200].map(g => (
-                        <button
-                          key={g}
-                          onClick={() => {
-                            const mult = g / 100;
-                            setForm(f => ({
-                              ...f,
-                              grams: String(g),
-                              calories: String(Math.round(basePer100.calories * mult)),
-                              protein: String(Math.round(basePer100.protein * mult * 10) / 10),
-                              carbs: String(Math.round(basePer100.carbs * mult * 10) / 10),
-                              fat: String(Math.round(basePer100.fat * mult * 10) / 10),
-                            }));
-                          }}
-                          className={`px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95
-                            ${form.grams === String(g) ? 'bg-foreground text-background' : 'bg-secondary text-secondary-foreground'}`}
-                        >
-                          {g}г
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <NumInput label="Ккал" value={form.calories} onChange={v => setForm(f => ({ ...f, calories: v }))} />
-                  <NumInput label="Белки" value={form.protein} onChange={v => setForm(f => ({ ...f, protein: v }))} />
-                  <NumInput label="Углев." value={form.carbs} onChange={v => setForm(f => ({ ...f, carbs: v }))} />
-                  <NumInput label="Жиры" value={form.fat} onChange={v => setForm(f => ({ ...f, fat: v }))} />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={addItem}
-                    disabled={!form.name}
-                    className="flex-1 py-2.5 rounded-xl bg-foreground text-background text-sm font-medium transition-all active:scale-95 disabled:opacity-40"
-                  >
-                    Добавить
-                  </button>
-                  <button
-                    onClick={() => setAdding(null)}
-                    className="px-4 py-2.5 rounded-xl bg-secondary text-sm font-medium transition-all active:scale-95"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Exercise block after this meal */}
+            {exercise && <ExerciseTracker slot={exercise} />}
           </div>
         );
       })}
-
-      {/* Exercise Tracker */}
-      <ExerciseTracker />
     </div>
   );
 }
