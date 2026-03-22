@@ -8,6 +8,17 @@ export interface DailyEntry {
   activity: number;
 }
 
+export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
+
+export interface UserProfile {
+  sex: 'male' | 'female';
+  age: number;
+  height: number; // cm
+  conditions: HealthCondition[];
+}
+
+const PROFILE_KEY = 'metabolic_profile';
+
 export interface ChecklistItem {
   id: string;
   label: string;
