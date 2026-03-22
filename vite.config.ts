@@ -22,9 +22,9 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
       },
       manifest: {
-        name: "Metabolic Dashboard",
-        short_name: "Metabolic",
-        description: "Отслеживайте метаболическое состояние и понимайте, почему вес не уходит",
+        name: "AI Health Operator",
+        short_name: "Health AI",
+        description: "AI-агент для контроля веса, голода и энергии. Ежедневные планы и рекомендации.",
         theme_color: "#f5f6f8",
         background_color: "#f5f6f8",
         display: "standalone",
