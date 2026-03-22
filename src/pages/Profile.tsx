@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { getProfile, saveProfile, calcDailyDeficit, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
-import { Check, User, Target } from 'lucide-react';
+import { saveCloudProfile } from '@/lib/cloudStorage';
+import { useAuth } from '@/contexts/AuthContext';
+import { Check, User, Target, LogOut } from 'lucide-react';
 import NotificationSettings from '@/components/NotificationSettings';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
