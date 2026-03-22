@@ -27,6 +27,7 @@ export default function Profile() {
     const next = { ...profile, ...patch };
     setProfile(next);
     saveProfile(next);
+    saveCloudProfile(next);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   };
