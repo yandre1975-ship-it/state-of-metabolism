@@ -12,6 +12,9 @@ const conditionsList: { id: HealthCondition; label: string; description: string 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const [saved, setSaved] = useState(false);
+  const [ageStr, setAgeStr] = useState(String(profile.age));
+  const [heightStr, setHeightStr] = useState(String(profile.height));
+  const [weightStr, setWeightStr] = useState(String(profile.weight));
 
   const update = (patch: Partial<UserProfile>) => {
     const next = { ...profile, ...patch };
