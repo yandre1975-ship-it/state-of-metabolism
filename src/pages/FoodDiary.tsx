@@ -16,7 +16,15 @@ const mealSlots = [
 ];
 
 export default function FoodDiary() {
-  const entry = getTodayEntry();
+  const [entry, setEntry] = useState<DailyEntry>(getTodayEntry);
+  const updateEntry = (patch: Partial<DailyEntry>) => {
+    setEntry(prev => {
+      const next = { ...prev, ...patch };
+      saveEntry(next);
+      return next;
+    });
+  };
+  const entryData = entry;
   const [showHistory, setShowHistory] = useState(false);
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
