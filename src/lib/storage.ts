@@ -10,6 +10,7 @@ export interface DailyEntry {
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
 export type Goal = 'lose' | 'maintain' | 'gain';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
 
 export interface UserProfile {
   name: string;
@@ -18,6 +19,7 @@ export interface UserProfile {
   height: number; // cm
   weight: number; // kg
   goal: Goal;
+  activityLevel: ActivityLevel;
   conditions: HealthCondition[];
   targetWeight?: number; // kg
   targetDate?: string; // YYYY-MM-DD
