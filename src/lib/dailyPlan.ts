@@ -1,4 +1,5 @@
 import { type DailyEntry, type UserProfile, getEntries, getToday } from './storage';
+import { canAccess } from './premium';
 
 export interface DailyPlan {
   actions: string[];
