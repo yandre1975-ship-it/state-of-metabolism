@@ -170,8 +170,16 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
     utterance.pitch = speechPitch;
     const voice = getSelectedVoice();
     if (voice) utterance.voice = voice;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
     synthRef.current.speak(utterance);
   }, [speechRate, speechPitch, getSelectedVoice]);
+
+  const stopSpeaking = useCallback(() => {
+    synthRef.current.cancel();
+    setIsSpeaking(false);
+  }, []);
 
   const speakText = useCallback((text: string) => {
     if (!autoSpeak) return;
