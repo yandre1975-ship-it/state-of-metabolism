@@ -14,8 +14,24 @@ export interface ChecklistItem {
   checked: boolean;
 }
 
+export interface FoodItem {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  meal: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+}
+
+export interface DailyFood {
+  date: string;
+  items: FoodItem[];
+}
+
 const ENTRIES_KEY = 'metabolic_entries';
 const CHECKLIST_KEY = 'metabolic_checklist';
+const FOOD_KEY = 'metabolic_food';
 
 export function getToday(): string {
   return new Date().toISOString().slice(0, 10);
