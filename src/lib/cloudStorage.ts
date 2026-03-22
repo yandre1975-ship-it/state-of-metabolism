@@ -118,7 +118,7 @@ export async function getCloudExercises(date: string): Promise<DailyExercises | 
     .maybeSingle();
 
   if (!data) return null;
-  return { date: data.date, items: data.items as DailyExercises['items'] || [] };
+  return { date: data.date, items: (data.items as unknown as DailyExercises['items']) || [] };
 }
 
 export async function saveCloudExercises(day: DailyExercises) {
