@@ -133,6 +133,20 @@ export function saveDailyFood(day: DailyFood) {
   } catch {}
 }
 
+export function getAllFood(): DailyFood[] {
+  try {
+    const all: DailyFood[] = JSON.parse(localStorage.getItem(FOOD_KEY) || '[]');
+    return all.sort((a, b) => b.date.localeCompare(a.date));
+  } catch { return []; }
+}
+
+export function getFoodByDate(date: string): DailyFood {
+  try {
+    const all: DailyFood[] = JSON.parse(localStorage.getItem(FOOD_KEY) || '[]');
+    return all.find(d => d.date === date) || { date, items: [] };
+  } catch { return { date, items: [] }; }
+}
+
 /**
  * Calculate daily macro targets based on weight (kg) and activity (min).
  * Uses Mifflin-St Jeor BMR estimate (male default) + activity factor.
