@@ -397,6 +397,87 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
                     msg.content
                   )}
                 </div>
+                {/* Add to food diary button for nutrition agent */}
+                {msg.role === 'assistant' && msg.agent === 'nutrition' && (() => {
+                  const foodItems = parseFoodFromMessage(msg.content);
+                  if (foodItems.length === 0) return null;
+                  const msgKey = `msg_${i}`;
+                  const allAdded = foodItems.every((_, fi) => addedItems.has(`${msgKey}_${fi}`));
+                  
+                  const addAllToFood = () => {
+                    const food = getTodayFood();
+                    const hour = new Date().getHours();
+                    const meal: FoodItem['meal'] = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
+                    
+                    const newItems: FoodItem[] = foodItems
+                      .filter((_, fi) => !addedItems.has(`${msgKey}_${fi}`))
+                      .map((item, fi) => ({
+                        id: `ai_${Date.now()}_${fi}`,
+                        name: `${item.name} (${item.grams}г)`,
+                        calories: item.calories,
+                        protein: item.protein,
+                        carbs: item.carbs,
+                        fat: item.fat,
+                        meal,
+                      }));
+                    
+                    saveDailyFood({ ...food, items: [...food.items, ...newItems] });
+                    setAddedItems(prev => {
+                      const next = new Set(prev);
+                      foodItems.forEach((_, fi) => next.add(`${msgKey}_${fi}`));
+                      return next;
+                    });
+                  };
+
+                  return (
+                    <div className="mt-2 space-y-1.5">
+                      {foodItems.map((item, fi) => {
+                        const itemKey = `${msgKey}_${fi}`;
+                        const isAdded = addedItems.has(itemKey);
+                        return (
+                          <div key={fi} className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/30">
+                            <div>
+                              <p className="text-xs font-medium">{item.name}</p>
+                              <p className="text-[10px] text-muted-foreground tabular-nums">
+                                {item.grams}г · {item.calories} ккал · Б{item.protein} У{item.carbs} Ж{item.fat}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const food = getTodayFood();
+                                const hour = new Date().getHours();
+                                const meal: FoodItem['meal'] = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 18 ? 'snack' : 'dinner';
+                                const newItem: FoodItem = {
+                                  id: `ai_${Date.now()}_${fi}`,
+                                  name: `${item.name} (${item.grams}г)`,
+                                  calories: item.calories, protein: item.protein, carbs: item.carbs, fat: item.fat, meal,
+                                };
+                                saveDailyFood({ ...food, items: [...food.items, newItem] });
+                                setAddedItems(prev => new Set([...prev, itemKey]));
+                              }}
+                              disabled={isAdded}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all active:scale-90
+                                ${isAdded ? 'bg-emerald-500 text-white' : 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 hover:bg-emerald-200'}`}
+                            >
+                              {isAdded ? '✓' : '+'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <button
+                        onClick={() => { addAllToFood(); onNavigateToFood?.(); }}
+                        disabled={allAdded}
+                        className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-all active:scale-[0.97]
+                          ${allAdded
+                            ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600'
+                            : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}
+                      >
+                        <UtensilsCrossed size={12} />
+                        {allAdded ? 'Добавлено в дневник ✓' : `Добавить всё в дневник (${foodItems.length})`}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
               {msg.role === 'user' && (
                 <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0 mt-1">
