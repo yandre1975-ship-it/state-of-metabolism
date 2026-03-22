@@ -50,12 +50,15 @@ const FOOD_KEY = 'metabolic_food';
 const EXERCISE_KEY = 'metabolic_exercises';
 
 const DEFAULT_EXERCISES: Omit<ExerciseEntry, 'id' | 'done'>[] = [
-  { name: 'Отжимания', reps: 20, sets: 3 },
-  { name: 'Приседания', reps: 20, sets: 3 },
-  { name: 'Планка', minutes: 1 },
-  { name: 'Скручивания', reps: 15, sets: 3 },
-  { name: 'Выпады', reps: 12, sets: 3 },
-  { name: 'Берпи', reps: 10, sets: 2 },
+  // Утро (после завтрака)
+  { name: 'Планка', minutes: 1, slot: 'morning' },
+  { name: 'Приседания', reps: 20, sets: 2, slot: 'morning' },
+  // День (после обеда)
+  { name: 'Отжимания', reps: 15, sets: 3, slot: 'afternoon' },
+  { name: 'Выпады', reps: 12, sets: 2, slot: 'afternoon' },
+  // Вечер (после ужина)
+  { name: 'Скручивания', reps: 15, sets: 3, slot: 'evening' },
+  { name: 'Берпи', reps: 8, sets: 2, slot: 'evening' },
 ];
 
 export function getToday(): string {
