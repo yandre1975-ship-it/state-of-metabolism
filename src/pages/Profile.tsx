@@ -4,6 +4,7 @@ import { saveCloudProfile } from '@/lib/cloudStorage';
 import { useAuth } from '@/contexts/AuthContext';
 import { Check, User, Target, LogOut } from 'lucide-react';
 import NotificationSettings from '@/components/NotificationSettings';
+import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
   { id: 'insulin_resistance', label: 'Инсулинорезистентность', description: 'Снижает углеводы, увеличивает белок и жиры' },
