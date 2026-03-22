@@ -337,14 +337,33 @@ export default function AIChat() {
                     {agentMeta.label}
                   </span>
                 )}
-                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed
+                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed relative group
                   ${msg.role === 'user'
                     ? 'bg-foreground text-background rounded-br-md'
                     : 'bg-card border rounded-bl-md'}`}>
                   {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="prose prose-sm max-w-none [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                      <button
+                        onClick={() => {
+                          synthRef.current.cancel();
+                          const clean = msg.content.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
+                          const utt = new SpeechSynthesisUtterance(clean);
+                          utt.lang = 'ru-RU';
+                          utt.rate = 1.05;
+                          const voices = synthRef.current.getVoices();
+                          const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
+                          if (ruVoice) utt.voice = ruVoice;
+                          synthRef.current.speak(utt);
+                        }}
+                        className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-md bg-secondary/80 text-muted-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
+                        title="Прослушать"
+                      >
+                        <Volume2 size={11} />
+                      </button>
+                    </>
                   ) : (
                     msg.content
                   )}
