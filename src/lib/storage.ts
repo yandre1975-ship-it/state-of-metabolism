@@ -10,6 +10,7 @@ export interface DailyEntry {
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
 export type Goal = 'lose' | 'maintain' | 'gain';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
 
 export interface UserProfile {
   name: string;
@@ -18,6 +19,7 @@ export interface UserProfile {
   height: number; // cm
   weight: number; // kg
   goal: Goal;
+  activityLevel: ActivityLevel;
   conditions: HealthCondition[];
   targetWeight?: number; // kg
   targetDate?: string; // YYYY-MM-DD
@@ -87,7 +89,7 @@ export function getProfile(): UserProfile {
     const stored = localStorage.getItem(PROFILE_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  return { name: '', sex: 'male', age: 30, height: 170, weight: 75, goal: 'lose' as Goal, conditions: [] };
+  return { name: '', sex: 'male', age: 30, height: 170, weight: 75, goal: 'lose' as Goal, activityLevel: 'light' as ActivityLevel, conditions: [] };
 }
 
 export function saveProfile(profile: UserProfile) {
@@ -228,6 +230,7 @@ export function calcMacroTargets(weight: number | null, activityMin: number, pro
   const age = profile?.age || 30;
   const height = profile?.height || 170;
   const goal = profile?.goal || 'lose';
+  const actLevel = profile?.activityLevel || 'light';
 
   // Mifflin-St Jeor BMR
   let bmr: number;
@@ -237,12 +240,21 @@ export function calcMacroTargets(weight: number | null, activityMin: number, pro
     bmr = 10 * w + 6.25 * height - 5 * age + 5;
   }
 
-  // Activity calories
+  // Activity multiplier based on profile activity level
+  const actMultipliers: Record<string, number> = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+  };
+  const tdee = bmr * (actMultipliers[actLevel] || 1.375);
+
+  // Additional activity calories from today's tracked minutes
   const activityCal = activityMin * 5;
 
   // Goal-based deficit/surplus
   const goalAdjust = goal === 'lose' ? -400 : goal === 'gain' ? 300 : 0;
-  let totalCal = Math.round(bmr + activityCal + goalAdjust);
+  let totalCal = Math.round(tdee + activityCal + goalAdjust);
 
   // Macro split defaults: 30P / 40C / 30F
   let pPct = 0.3, cPct = 0.4, fPct = 0.3;
