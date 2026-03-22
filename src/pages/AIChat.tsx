@@ -93,7 +93,7 @@ export default function AIChat() {
 
   const streamAI = useCallback(async (
     allMessages: Msg[],
-    onChunk: (soFar: string) => void,
+    onChunk: (soFar: string, agent?: AgentRole) => void,
     requestedAgent?: AgentRole,
   ): Promise<{ content: string; agent: AgentRole }> => {
     const context = getContext();
