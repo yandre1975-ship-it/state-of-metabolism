@@ -2,8 +2,21 @@ import { useState } from 'react';
 import { Check, Dumbbell } from 'lucide-react';
 import { getTodayExercises, saveExercises, type ExerciseEntry } from '@/lib/storage';
 
-export default function ExerciseTracker() {
+interface Props {
+  slot: 'morning' | 'afternoon' | 'evening';
+}
+
+const slotLabels = {
+  morning: '💪 Утренняя разминка',
+  afternoon: '💪 Дневная тренировка',
+  evening: '💪 Вечерняя тренировка',
+};
+
+export default function ExerciseTracker({ slot }: Props) {
   const [data, setData] = useState(getTodayExercises);
+  const items = data.items.filter(i => i.slot === slot);
+
+  if (items.length === 0) return null;
 
   const toggle = (id: string) => {
     const next = {
@@ -14,41 +27,35 @@ export default function ExerciseTracker() {
     saveExercises(next);
   };
 
-  const done = data.items.filter(i => i.done).length;
+  const done = items.filter(i => i.done).length;
 
   return (
-    <div className="rounded-2xl bg-card border p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-1">
+    <div className="rounded-2xl bg-card border p-4 shadow-sm border-dashed border-muted-foreground/20">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Dumbbell size={16} className="text-muted-foreground" />
-          <h3 className="font-semibold">Тренировка</h3>
+          <Dumbbell size={14} className="text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground">{slotLabels[slot]}</span>
         </div>
-        <span className="text-sm text-muted-foreground tabular-nums">{done}/{data.items.length}</span>
+        <span className="text-[11px] text-muted-foreground tabular-nums">{done}/{items.length}</span>
       </div>
-      <div className="w-full bg-secondary rounded-full h-1.5 mb-4">
-        <div
-          className="bg-status-green h-1.5 rounded-full transition-all duration-300"
-          style={{ width: `${(done / data.items.length) * 100}%` }}
-        />
-      </div>
-      <ul className="space-y-2">
-        {data.items.map(item => (
+      <ul className="space-y-1.5">
+        {items.map(item => (
           <li key={item.id}>
             <button
               onClick={() => toggle(item.id)}
-              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all duration-150 active:scale-[0.98] text-left
+              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-150 active:scale-[0.98] text-left
                 ${item.done ? 'bg-status-green-bg' : 'bg-secondary hover:bg-secondary/70'}`}
             >
-              <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
-                  ${item.done ? 'bg-status-green text-white' : 'border-2 border-muted-foreground/30'}`}>
-                  {item.done && <Check size={14} strokeWidth={3} />}
+              <div className="flex items-center gap-2.5">
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors
+                  ${item.done ? 'bg-status-green text-white' : 'border-2 border-muted-foreground/25'}`}>
+                  {item.done && <Check size={12} strokeWidth={3} />}
                 </div>
                 <span className={`text-sm ${item.done ? 'line-through text-muted-foreground' : ''}`}>
                   {item.name}
                 </span>
               </div>
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-[11px] text-muted-foreground tabular-nums">
                 {item.sets && item.reps && `${item.sets}×${item.reps}`}
                 {item.minutes && `${item.minutes} мин`}
               </span>
