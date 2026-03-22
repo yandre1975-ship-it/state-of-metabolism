@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
-import { Plus, Trash2, History, Crown, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Trash2, History, Crown, Lightbulb, ChevronDown, ChevronUp, Coffee } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
-import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem } from '@/lib/storage';
+import { getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import { canAccess } from '@/lib/premium';
 import { generateRecommendations } from '@/lib/recommendations';
@@ -16,7 +16,15 @@ const mealSlots = [
 ];
 
 export default function FoodDiary() {
-  const entry = getTodayEntry();
+  const [entry, setEntry] = useState<DailyEntry>(getTodayEntry);
+  const updateEntry = (patch: Partial<DailyEntry>) => {
+    setEntry(prev => {
+      const next = { ...prev, ...patch };
+      saveEntry(next);
+      return next;
+    });
+  };
+  const entryData = entry;
   const [showHistory, setShowHistory] = useState(false);
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
@@ -134,6 +142,29 @@ export default function FoodDiary() {
         <p className="text-[11px] text-muted-foreground">
           Сожгите ~{recs.exerciseTotalBurn} ккал упражнениями сегодня для оптимального баланса
         </p>
+      </div>
+
+      {/* Coffee Tracker */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Coffee size={16} className="text-muted-foreground" />
+            <span className="font-semibold text-sm">Кофе</span>
+          </div>
+          <span className="text-xs text-muted-foreground tabular-nums">{entryData.coffee} чашек</span>
+        </div>
+        <div className="flex gap-2">
+          {[0, 1, 2, 3, 4, 5].map(n => (
+            <button key={n} onClick={() => updateEntry({ coffee: n })}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
+                ${entryData.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        {entryData.coffee > 2 && (
+          <p className="text-[10px] text-status-yellow mt-2">⚠️ Более 2 чашек может влиять на сон и аппетит</p>
+        )}
       </div>
 
       {/* Interleaved: meal → recommendations → snack → exercises */}

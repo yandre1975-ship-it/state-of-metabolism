@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
+import { Activity, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
@@ -119,18 +119,6 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      {/* Coffee */}
-      <Card icon={<Coffee size={16} />} label="Кофе">
-        <div className="flex gap-2">
-          {[0, 1, 2, 3].map(n => (
-            <button key={n} onClick={() => update({ coffee: n })}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-                ${entry.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
-              {n}
-            </button>
-          ))}
-        </div>
-      </Card>
 
       {/* Protein */}
       <Card icon={<Drumstick size={16} />} label="Белок в рационе">
