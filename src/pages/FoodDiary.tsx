@@ -245,6 +245,9 @@ export default function FoodDiary() {
           </div>
         );
       })}
+
+      {/* Exercise Tracker */}
+      <ExerciseTracker />
     </div>
   );
 }
