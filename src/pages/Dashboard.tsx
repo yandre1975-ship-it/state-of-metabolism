@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayEntry, saveEntry, getStatus, getInsights, getProfile, type DailyEntry, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Activity, Coffee, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
+import { Activity, Flame, Zap, Drumstick, Scale, Target, AlertTriangle, Droplets, Moon } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
