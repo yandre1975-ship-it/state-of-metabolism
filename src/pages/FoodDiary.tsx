@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { Plus, Trash2, History } from 'lucide-react';
+import { Plus, Trash2, History, Crown } from 'lucide-react';
 import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
+import { canAccess } from '@/lib/premium';
 import FoodHistory from './FoodHistory';
 import ExerciseTracker from '@/components/ExerciseTracker';
 
@@ -71,12 +72,18 @@ export default function FoodDiary() {
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Дневная норма</h3>
-          <button
-            onClick={() => setShowHistory(true)}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors active:scale-95"
-          >
-            <History size={14} /> История
-          </button>
+          {canAccess('foodHistory') ? (
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+            >
+              <History size={14} /> История
+            </button>
+          ) : (
+            <span className="flex items-center gap-1 text-[10px] text-status-yellow">
+              <Crown size={10} /> Pro
+            </span>
+          )}
         </div>
         <div className="grid grid-cols-4 gap-3">
           <MacroRing label="Нетто" current={netCalories} target={targets.calories} unit="" color="var(--foreground)" />

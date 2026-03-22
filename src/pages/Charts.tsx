@@ -1,6 +1,7 @@
 import { getEntries, getProfile, type DailyEntry } from '@/lib/storage';
+import { canAccess } from '@/lib/premium';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { TrendingDown, Target } from 'lucide-react';
+import { TrendingDown, Target, Crown } from 'lucide-react';
 
 export default function Charts() {
   const allEntries = getEntries();
@@ -20,7 +21,7 @@ export default function Charts() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Weight Progress to Goal */}
-      {targetWeight && weightEntries.length >= 1 && (
+      {targetWeight && weightEntries.length >= 1 && canAccess('weightForecast') && (
         <WeightProgressCard
           data={progressData}
           trendLine={trendLine}
@@ -29,6 +30,12 @@ export default function Charts() {
           forecastDate={forecastDate}
           currentWeight={weightEntries[weightEntries.length - 1]?.weight || profile.weight}
         />
+      )}
+      {targetWeight && weightEntries.length >= 1 && !canAccess('weightForecast') && (
+        <div className="rounded-2xl border-2 border-dashed border-status-yellow/30 p-6 flex items-center justify-center gap-3">
+          <Crown size={16} className="text-status-yellow" />
+          <span className="text-sm text-muted-foreground">Прогноз веса доступен в Pro</span>
+        </div>
       )}
 
       {/* Standard charts */}
