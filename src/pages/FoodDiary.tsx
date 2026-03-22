@@ -152,6 +152,57 @@ export default function FoodDiary() {
                     </div>
                   )}
                 </div>
+                {/* Portion weight */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Порция (г)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={form.grams}
+                      onChange={e => {
+                        const g = e.target.value;
+                        setForm(f => {
+                          const next = { ...f, grams: g };
+                          if (basePer100 && g) {
+                            const mult = Number(g) / 100;
+                            next.calories = String(Math.round(basePer100.calories * mult));
+                            next.protein = String(Math.round(basePer100.protein * mult * 10) / 10);
+                            next.carbs = String(Math.round(basePer100.carbs * mult * 10) / 10);
+                            next.fat = String(Math.round(basePer100.fat * mult * 10) / 10);
+                          }
+                          return next;
+                        });
+                      }}
+                      placeholder="100"
+                      className="w-full bg-secondary rounded-lg px-2 py-2 text-sm outline-none tabular-nums placeholder:text-muted-foreground/40"
+                    />
+                  </div>
+                  {basePer100 && (
+                    <div className="flex gap-1 mt-4">
+                      {[50, 100, 150, 200].map(g => (
+                        <button
+                          key={g}
+                          onClick={() => {
+                            const mult = g / 100;
+                            setForm(f => ({
+                              ...f,
+                              grams: String(g),
+                              calories: String(Math.round(basePer100.calories * mult)),
+                              protein: String(Math.round(basePer100.protein * mult * 10) / 10),
+                              carbs: String(Math.round(basePer100.carbs * mult * 10) / 10),
+                              fat: String(Math.round(basePer100.fat * mult * 10) / 10),
+                            }));
+                          }}
+                          className={`px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95
+                            ${form.grams === String(g) ? 'bg-foreground text-background' : 'bg-secondary text-secondary-foreground'}`}
+                        >
+                          {g}г
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   <NumInput label="Ккал" value={form.calories} onChange={v => setForm(f => ({ ...f, calories: v }))} />
                   <NumInput label="Белки" value={form.protein} onChange={v => setForm(f => ({ ...f, protein: v }))} />
