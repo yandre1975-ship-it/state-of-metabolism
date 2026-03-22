@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -46,6 +49,14 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        status: {
+          green: "hsl(var(--status-green))",
+          "green-bg": "hsl(var(--status-green-bg))",
+          yellow: "hsl(var(--status-yellow))",
+          "yellow-bg": "hsl(var(--status-yellow-bg))",
+          red: "hsl(var(--status-red))",
+          "red-bg": "hsl(var(--status-red-bg))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
