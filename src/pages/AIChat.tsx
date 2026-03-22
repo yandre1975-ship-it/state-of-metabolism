@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed, Settings2 } from 'lucide-react';
 import { getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, type FoodItem } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
@@ -119,24 +119,63 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
   // Voice state
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [speechRate, setSpeechRate] = useState(() => {
+    try { return parseFloat(localStorage.getItem('tts_rate') || '1.05'); } catch { return 1.05; }
+  });
+  const [speechPitch, setSpeechPitch] = useState(() => {
+    try { return parseFloat(localStorage.getItem('tts_pitch') || '1'); } catch { return 1; }
+  });
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState(() => {
+    try { return localStorage.getItem('tts_voice') || ''; } catch { return ''; }
+  });
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef(window.speechSynthesis);
 
-  const speakText = useCallback((text: string) => {
-    if (!autoSpeak) return;
+  // Load voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = synthRef.current.getVoices().filter((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
+      if (voices.length > 0) setAvailableVoices(voices);
+    };
+    loadVoices();
+    synthRef.current.addEventListener?.('voiceschanged', loadVoices);
+    return () => synthRef.current.removeEventListener?.('voiceschanged', loadVoices);
+  }, []);
+
+  // Save settings
+  useEffect(() => {
+    localStorage.setItem('tts_rate', String(speechRate));
+    localStorage.setItem('tts_pitch', String(speechPitch));
+    localStorage.setItem('tts_voice', selectedVoiceURI);
+  }, [speechRate, speechPitch, selectedVoiceURI]);
+
+  const getSelectedVoice = useCallback(() => {
+    const voices = synthRef.current.getVoices();
+    if (selectedVoiceURI) {
+      const found = voices.find((v: SpeechSynthesisVoice) => v.voiceURI === selectedVoiceURI);
+      if (found) return found;
+    }
+    return voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru')) || null;
+  }, [selectedVoiceURI]);
+
+  const doSpeak = useCallback((text: string) => {
     synthRef.current.cancel();
-    // Strip markdown
     const clean = text.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.lang = 'ru-RU';
-    utterance.rate = 1.05;
-    utterance.pitch = 1;
-    // Try to pick a Russian voice
-    const voices = synthRef.current.getVoices();
-    const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
-    if (ruVoice) utterance.voice = ruVoice;
+    utterance.rate = speechRate;
+    utterance.pitch = speechPitch;
+    const voice = getSelectedVoice();
+    if (voice) utterance.voice = voice;
     synthRef.current.speak(utterance);
-  }, [autoSpeak]);
+  }, [speechRate, speechPitch, getSelectedVoice]);
+
+  const speakText = useCallback((text: string) => {
+    if (!autoSpeak) return;
+    doSpeak(text);
+  }, [autoSpeak, doSpeak]);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -376,17 +415,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                       <button
-                        onClick={() => {
-                          synthRef.current.cancel();
-                          const clean = msg.content.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
-                          const utt = new SpeechSynthesisUtterance(clean);
-                          utt.lang = 'ru-RU';
-                          utt.rate = 1.05;
-                          const voices = synthRef.current.getVoices();
-                          const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
-                          if (ruVoice) utt.voice = ruVoice;
-                          synthRef.current.speak(utt);
-                        }}
+                        onClick={() => doSpeak(msg.content)}
                         className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-md bg-secondary/80 text-muted-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
                         title="Прослушать"
                       >
@@ -530,6 +559,71 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
         </div>
       )}
 
+      {/* Voice settings panel */}
+      {showVoiceSettings && (
+        <div className="mb-3 p-4 rounded-2xl bg-card border shadow-sm space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">⚙️ Настройки голоса</span>
+            <button onClick={() => setShowVoiceSettings(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+          </div>
+
+          {availableVoices.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Голос</label>
+              <select
+                value={selectedVoiceURI}
+                onChange={e => setSelectedVoiceURI(e.target.value)}
+                className="w-full bg-secondary border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Авто (русский)</option>
+                {availableVoices.map(v => (
+                  <option key={v.voiceURI} value={v.voiceURI}>
+                    {v.name} {v.localService ? '(локальный)' : '(сетевой)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Скорость</label>
+              <span className="text-xs tabular-nums font-medium">{speechRate.toFixed(2)}×</span>
+            </div>
+            <input
+              type="range" min="0.5" max="2" step="0.05" value={speechRate}
+              onChange={e => setSpeechRate(parseFloat(e.target.value))}
+              className="w-full accent-primary h-1.5"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>0.5×</span><span>1×</span><span>2×</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Тон</label>
+              <span className="text-xs tabular-nums font-medium">{speechPitch.toFixed(1)}</span>
+            </div>
+            <input
+              type="range" min="0.5" max="2" step="0.1" value={speechPitch}
+              onChange={e => setSpeechPitch(parseFloat(e.target.value))}
+              className="w-full accent-primary h-1.5"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Низкий</span><span>Норма</span><span>Высокий</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => doSpeak('Привет! Так звучит мой голос с текущими настройками.')}
+            className="w-full py-2 rounded-xl bg-secondary text-sm font-medium hover:bg-secondary/70 transition-colors active:scale-[0.98]"
+          >
+            🔊 Тест голоса
+          </button>
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex gap-2 pt-3 border-t items-center">
         {/* TTS toggle */}
@@ -545,6 +639,15 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
           title={autoSpeak ? 'Озвучка включена' : 'Включить озвучку'}
         >
           {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
+        {/* Voice settings button */}
+        <button
+          onClick={() => setShowVoiceSettings(prev => !prev)}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0
+            ${showVoiceSettings ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/70'}`}
+          title="Настройки голоса"
+        >
+          <Settings2 size={16} />
         </button>
 
         <input
