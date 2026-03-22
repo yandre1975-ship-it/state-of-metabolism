@@ -13,6 +13,7 @@ const meals = [
 
 export default function FoodDiary() {
   const entry = getTodayEntry();
+  const [showHistory, setShowHistory] = useState(false);
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
   const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
