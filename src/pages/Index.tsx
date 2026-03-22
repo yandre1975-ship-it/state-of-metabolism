@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell, User, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell, User, CalendarDays, Crown } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
+import { canAccess, isPro } from '@/lib/premium';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import Checklist from './Checklist';
@@ -8,11 +9,12 @@ import FoodDiary from './FoodDiary';
 import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
 import Onboarding from './Onboarding';
+import ProUpgrade, { ProGate } from '@/components/ProUpgrade';
 
 const tabs = [
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
   { id: 'food', label: 'Еда & Спорт', icon: Dumbbell },
-  { id: 'weekly', label: 'Неделя', icon: CalendarDays },
+  { id: 'weekly', label: 'Неделя', icon: CalendarDays, proFeature: 'weeklyReview' as const },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
   { id: 'checklist', label: 'Чеклист', icon: CheckSquare },
   { id: 'profile', label: 'Профиль', icon: User },
@@ -22,6 +24,7 @@ type Tab = typeof tabs[number]['id'];
 
 export default function Index() {
   const [tab, setTab] = useState<Tab>('dashboard');
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [onboarded, setOnboarded] = useState(() => {
     const p = getProfile();
     return p.name.trim().length > 0;
@@ -31,31 +34,60 @@ export default function Index() {
     return <Onboarding onComplete={() => setOnboarded(true)} />;
   }
 
+  if (showUpgrade) {
+    return <ProUpgrade onClose={() => setShowUpgrade(false)} />;
+  }
+
+  const pro = isPro();
+
+  const renderTab = () => {
+    switch (tab) {
+      case 'dashboard': return <Dashboard />;
+      case 'food': return <FoodDiary />;
+      case 'weekly':
+        return canAccess('weeklyReview')
+          ? <WeeklyReview />
+          : <ProGate feature="Еженедельный обзор" onUpgrade={() => setShowUpgrade(true)} />;
+      case 'charts': return <Charts />;
+      case 'checklist': return <Checklist />;
+      case 'profile': return <Profile />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b px-4 py-3">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b px-4 py-3 flex items-center justify-between">
         <h1 className="text-base font-bold tracking-tight">AI Health Operator</h1>
+        <button onClick={() => setShowUpgrade(true)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium active:scale-95 transition-all
+            ${pro ? 'bg-foreground text-background' : 'bg-status-yellow/15 text-status-yellow'}`}>
+          <Crown size={12} />
+          {pro ? 'Pro' : 'Upgrade'}
+        </button>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-5 pb-24">
-        {tab === 'dashboard' && <Dashboard />}
-        {tab === 'food' && <FoodDiary />}
-        {tab === 'weekly' && <WeeklyReview />}
-        {tab === 'charts' && <Charts />}
-        {tab === 'checklist' && <Checklist />}
-        {tab === 'profile' && <Profile />}
+        {renderTab()}
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-lg border-t z-10">
         <div className="max-w-lg mx-auto flex">
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors active:scale-95
-                ${tab === t.id ? 'text-foreground' : 'text-muted-foreground'}`}>
-              <t.icon size={18} strokeWidth={tab === t.id ? 2.5 : 1.5} />
-              <span className="text-[10px] font-medium">{t.label}</span>
-            </button>
-          ))}
+          {tabs.map(t => {
+            const isLocked = 'proFeature' in t && t.proFeature && !canAccess(t.proFeature);
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors active:scale-95 relative
+                  ${tab === t.id ? 'text-foreground' : 'text-muted-foreground'}`}>
+                <t.icon size={18} strokeWidth={tab === t.id ? 2.5 : 1.5} />
+                <span className="text-[10px] font-medium">{t.label}</span>
+                {isLocked && (
+                  <div className="absolute top-1.5 right-1/2 translate-x-4">
+                    <Crown size={8} className="text-status-yellow" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </nav>
     </div>
