@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell } from 'lucide-react';
+import { LayoutDashboard, BarChart3, CheckSquare, Dumbbell, User } from 'lucide-react';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import Checklist from './Checklist';
 import FoodDiary from './FoodDiary';
+import Profile from './Profile';
 
 const tabs = [
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
   { id: 'food', label: 'Еда & Спорт', icon: Dumbbell },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
   { id: 'checklist', label: 'Чеклист', icon: CheckSquare },
+  { id: 'profile', label: 'Профиль', icon: User },
 ] as const;
 
 type Tab = typeof tabs[number]['id'];
@@ -28,6 +30,7 @@ export default function Index() {
         {tab === 'food' && <FoodDiary />}
         {tab === 'charts' && <Charts />}
         {tab === 'checklist' && <Checklist />}
+        {tab === 'profile' && <Profile />}
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-lg border-t z-10">

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Plus, Trash2, History } from 'lucide-react';
-import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, type FoodItem } from '@/lib/storage';
+import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, getProfile, type FoodItem } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import FoodHistory from './FoodHistory';
 import ExerciseTracker from '@/components/ExerciseTracker';
@@ -25,7 +25,8 @@ export default function FoodDiary() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestRef = useRef<HTMLDivElement>(null);
 
-  const targets = calcMacroTargets(entry.weight, entry.activity);
+  const profile = getProfile();
+  const targets = calcMacroTargets(entry.weight, entry.activity, profile);
 
   const totals = food.items.reduce(
     (acc, i) => ({ cal: acc.cal + i.calories, p: acc.p + i.protein, c: acc.c + i.carbs, f: acc.f + i.fat }),
