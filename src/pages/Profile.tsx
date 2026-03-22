@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getProfile, saveProfile, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
-import { Check, User } from 'lucide-react';
+import { getProfile, saveProfile, calcDailyDeficit, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
+import { Check, User, Target } from 'lucide-react';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
   { id: 'insulin_resistance', label: 'Инсулинорезистентность', description: 'Снижает углеводы, увеличивает белок и жиры' },
@@ -15,6 +15,8 @@ export default function Profile() {
   const [ageStr, setAgeStr] = useState(String(profile.age));
   const [heightStr, setHeightStr] = useState(String(profile.height));
   const [weightStr, setWeightStr] = useState(String(profile.weight));
+  const [targetWeightStr, setTargetWeightStr] = useState(String(profile.targetWeight || ''));
+  const [targetDate, setTargetDate] = useState(profile.targetDate || '');
 
   const update = (patch: Partial<UserProfile>) => {
     const next = { ...profile, ...patch };
@@ -110,6 +112,71 @@ export default function Profile() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Target Weight & Date */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center gap-2 text-muted-foreground mb-3">
+          <Target size={16} />
+          <span className="text-xs font-medium uppercase tracking-wide">Целевой вес и сроки</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Целевой вес</span>
+            <input type="number" inputMode="decimal" step="0.1" value={targetWeightStr}
+              onChange={e => setTargetWeightStr(e.target.value)}
+              onBlur={() => {
+                const v = targetWeightStr ? Math.max(30, Math.min(300, Number(targetWeightStr) || 0)) : undefined;
+                if (v) setTargetWeightStr(String(v));
+                update({ targetWeight: v });
+              }}
+              placeholder="—"
+              className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
+            <span className="text-[11px] text-muted-foreground">кг</span>
+          </div>
+          <div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">К дате</span>
+            <input type="date" value={targetDate}
+              onChange={e => {
+                setTargetDate(e.target.value);
+                update({ targetDate: e.target.value || undefined });
+              }}
+              min={new Date().toISOString().slice(0, 10)}
+              className="w-full bg-transparent text-lg font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
+          </div>
+        </div>
+
+        {/* Deficit calculation */}
+        {(() => {
+          const deficit = calcDailyDeficit(profile);
+          if (!deficit) return null;
+          const safe = deficit.dailyDeficit <= 1000;
+          return (
+            <div className={`mt-4 rounded-xl p-4 ${safe ? 'bg-status-green-bg' : 'bg-status-red-bg'}`}>
+              <p className="text-sm font-semibold mb-2">📊 План достижения цели</p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-lg font-bold tabular-nums">{deficit.kgToLose}</p>
+                  <p className="text-[10px] text-muted-foreground">кг сбросить</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold tabular-nums">{deficit.daysLeft}</p>
+                  <p className="text-[10px] text-muted-foreground">дней осталось</p>
+                </div>
+                <div>
+                  <p className={`text-lg font-bold tabular-nums ${safe ? 'text-status-green' : 'text-status-red'}`}>{deficit.dailyDeficit}</p>
+                  <p className="text-[10px] text-muted-foreground">ккал/день дефицит</p>
+                </div>
+              </div>
+              {!safe && (
+                <p className="text-xs text-status-red mt-2">⚠️ Дефицит &gt;1000 ккал/день небезопасен. Увеличьте срок или скорректируйте цель.</p>
+              )}
+              {safe && (
+                <p className="text-xs text-status-green mt-2">✓ Безопасный темп похудения</p>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Health Conditions */}
