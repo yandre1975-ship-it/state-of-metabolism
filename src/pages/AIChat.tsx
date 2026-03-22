@@ -118,6 +118,8 @@ export default function AIChat() {
     // Read agent info from headers
     const agentRole = (resp.headers.get('X-Agent-Role') || 'coach') as AgentRole;
     setActiveAgent(agentRole);
+    // Send initial empty chunk with agent so UI shows label immediately
+    onChunk('', agentRole);
 
     if (!resp.body) throw new Error('Нет ответа от сервера');
 
