@@ -46,7 +46,8 @@ export default function FoodDiary() {
       meal: adding,
     };
     save([...food.items, item]);
-    setForm({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+    setForm({ name: '', calories: '', protein: '', carbs: '', fat: '', grams: '100' });
+    setBasePer100(null);
     setAdding(null);
   };
 
