@@ -253,6 +253,7 @@ export default function AIChat() {
         const initMessages: Msg[] = [{ role: 'user', content: proactivePrompt }];
         const result = await streamAI(initMessages, (s, a) => upsertAssistant(s, a), 'coach');
         upsertAssistant(result.content, result.agent);
+        speakText(result.content);
       } catch (e) {
         console.error('Proactive greeting error:', e);
         setMessages([{
