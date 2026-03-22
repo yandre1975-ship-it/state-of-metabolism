@@ -101,6 +101,49 @@ export default function WeeklyReview() {
         </div>
       </div>
 
+      {/* Sleep chart */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Moon size={16} className="text-muted-foreground" />
+            <span className="font-semibold text-sm">🌙 Сон за неделю</span>
+          </div>
+          {avgSleep !== null && (
+            <span className="text-xs text-muted-foreground">Ср. {avgSleep} ч</span>
+          )}
+        </div>
+        {/* Bar chart */}
+        <div className="flex items-end gap-1.5 h-28">
+          {last7.map((e, i) => {
+            const h = e.sleepHours || 0;
+            const maxH = 12;
+            const pct = Math.min(100, (h / maxH) * 100);
+            const color = h === 0 ? 'bg-secondary' : h >= 7 ? 'bg-status-green' : h >= 6 ? 'bg-status-yellow' : 'bg-status-red';
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <span className="text-[10px] tabular-nums text-muted-foreground">{h > 0 ? `${h}` : ''}</span>
+                <div className="w-full rounded-t-md transition-all duration-300" style={{ height: `${Math.max(4, pct)}%` }}>
+                  <div className={`w-full h-full rounded-t-md ${color}`} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+        {/* Quality */}
+        {avgQuality !== null && (
+          <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-secondary">
+            <span className="text-xs text-muted-foreground">Среднее качество сна:</span>
+            <span className="text-sm font-semibold">{avgQuality}/5 — {qualityLabels[Math.round(avgQuality)] || 'Нормально'}</span>
+          </div>
+        )}
+        {avgSleep !== null && avgSleep < 7 && (
+          <p className="text-xs text-muted-foreground mt-3">⚠️ Среднее время сна ниже нормы (7–8 ч). Недосып замедляет метаболизм и усиливает голод.</p>
+        )}
+      </div>
+
       {/* AI Insight */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
