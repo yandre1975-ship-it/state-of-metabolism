@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { getTodayFood, saveDailyFood, getTodayEntry, calcMacroTargets, type FoodItem } from '@/lib/storage';
+import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 
 const meals = [
   { id: 'breakfast' as const, label: '🌅 Завтрак' },
@@ -14,6 +15,9 @@ export default function FoodDiary() {
   const [food, setFood] = useState(getTodayFood);
   const [adding, setAdding] = useState<FoodItem['meal'] | null>(null);
   const [form, setForm] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+  const [suggestions, setSuggestions] = useState<FoodDBItem[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestRef = useRef<HTMLDivElement>(null);
 
   const targets = calcMacroTargets(entry.weight, entry.activity);
 
@@ -104,13 +108,48 @@ export default function FoodDiary() {
             {/* Add form */}
             {adding === meal.id && (
               <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <input
-                  autoFocus
-                  placeholder="Название блюда"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-secondary rounded-xl px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50"
-                />
+                <div className="relative" ref={suggestRef}>
+                  <input
+                    autoFocus
+                    placeholder="Название блюда"
+                    value={form.name}
+                    onChange={e => {
+                      const v = e.target.value;
+                      setForm(f => ({ ...f, name: v }));
+                      const results = searchFoods(v);
+                      setSuggestions(results);
+                      setShowSuggestions(results.length > 0);
+                    }}
+                    onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                    className="w-full bg-secondary rounded-xl px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/50"
+                  />
+                  {showSuggestions && (
+                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                      {suggestions.map((s, idx) => (
+                        <button
+                          key={idx}
+                          className="w-full text-left px-3 py-2.5 hover:bg-secondary/60 transition-colors border-b last:border-0"
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            setForm({
+                              name: s.name,
+                              calories: String(s.calories),
+                              protein: String(s.protein),
+                              carbs: String(s.carbs),
+                              fat: String(s.fat),
+                            });
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          <p className="text-sm font-medium">{s.name}</p>
+                          <p className="text-[11px] text-muted-foreground tabular-nums">
+                            {s.calories} ккал · Б{s.protein} · У{s.carbs} · Ж{s.fat}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   <NumInput label="Ккал" value={form.calories} onChange={v => setForm(f => ({ ...f, calories: v }))} />
                   <NumInput label="Белки" value={form.protein} onChange={v => setForm(f => ({ ...f, protein: v }))} />
