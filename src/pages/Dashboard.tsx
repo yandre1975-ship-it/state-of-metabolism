@@ -29,6 +29,9 @@ export default function Dashboard() {
         <p className="text-muted-foreground text-sm">Привет, <span className="font-semibold text-foreground">{profile.name}</span> 👋</p>
       )}
 
+      {/* AI Agent Insights */}
+      <AgentInsightBanner tab="dashboard" />
+
       {/* Status Card */}
       <div className={`rounded-2xl border-2 ${cfg.border} ${cfg.bg} p-5 transition-colors duration-300`}>
         <div className="flex items-center gap-3">
