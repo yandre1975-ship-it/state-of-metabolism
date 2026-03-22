@@ -104,8 +104,9 @@ export function generateDailyPlan(entry: DailyEntry, profile: UserProfile): Dail
     }
   }
 
-  // Limit to 5
-  const finalActions = actions.slice(0, 5);
+  // Limit: Free = 3 actions, Pro = 5
+  const maxActions = canAccess('advancedPlan') ? 5 : 3;
+  const finalActions = actions.slice(0, maxActions);
 
   // --- Insight ---
   if (isStagnant) {
