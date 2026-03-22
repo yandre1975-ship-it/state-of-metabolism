@@ -82,7 +82,7 @@ export async function getCloudFood(date: string): Promise<DailyFood> {
     .eq('date', date)
     .maybeSingle();
 
-  return { date, items: data?.items as DailyFood['items'] || [] };
+  return { date, items: (data?.items as unknown as DailyFood['items']) || [] };
 }
 
 export async function getAllCloudFood(): Promise<DailyFood[]> {
