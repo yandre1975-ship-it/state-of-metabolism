@@ -7,6 +7,8 @@ export interface DailyEntry {
   protein: boolean;
   activity: number;
   water: number; // glasses of water (250ml each)
+  sleepHours: number; // hours of sleep
+  sleepQuality: number; // 1-5
 }
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
