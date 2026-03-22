@@ -84,8 +84,119 @@ export default function FoodDiary() {
 
   // History is now in a separate tab (HistoryDiary)
 
+  const waterNormMl = Math.round((profile.weight || 75) * 30);
+  const waterNormL = (waterNormMl / 1000).toFixed(1);
+  const waterNormGlasses = Math.round(waterNormMl / 250);
+  const glasses = entry.water || 0;
+  const waterLiters = (glasses * 250 / 1000);
+  const waterPct = Math.min(100, Math.round((glasses / waterNormGlasses) * 100));
+
+  const sleepHours = entry.sleepHours || 0;
+  const sleepQuality = entry.sleepQuality || 3;
+  const qualityLabels = ['', '😫 Ужасно', '😕 Плохо', '😐 Нормально', '😊 Хорошо', '😴 Отлично'];
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-5 animate-in fade-in duration-500">
+
+      {/* Quick Trackers */}
+      <div className="grid grid-cols-2 gap-3">
+        <TrackerCard icon={<Scale size={16} />} label="Вес (кг)">
+          <input type="number" step="0.1" value={entry.weight ?? ''} onChange={e => update({ weight: e.target.value ? Number(e.target.value) : null })}
+            placeholder="—" className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40" />
+        </TrackerCard>
+        <TrackerCard icon={<Activity size={16} />} label="Активность (мин)">
+          <input type="number" value={entry.activity || ''} onChange={e => update({ activity: Math.max(0, Number(e.target.value)) })}
+            placeholder="0" className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40" />
+        </TrackerCard>
+      </div>
+
+      {/* Hunger & Energy */}
+      <TrackerCard icon={<Flame size={16} />} label={`Голод: ${entry.hunger}/5`}>
+        <input type="range" min={1} max={5} value={entry.hunger} onChange={e => update({ hunger: Number(e.target.value) })}
+          className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Нет</span><span>Сильный</span></div>
+      </TrackerCard>
+
+      <TrackerCard icon={<Zap size={16} />} label={`Энергия: ${entry.energy}/5`}>
+        <input type="range" min={1} max={5} value={entry.energy} onChange={e => update({ energy: Number(e.target.value) })}
+          className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Низкая</span><span>Высокая</span></div>
+      </TrackerCard>
+
+      {/* Protein */}
+      <TrackerCard icon={<Drumstick size={16} />} label="Белок в рационе">
+        <button onClick={() => update({ protein: !entry.protein })}
+          className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
+            ${entry.protein ? 'bg-status-green text-white shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+          {entry.protein ? '✓ Да' : 'Нет'}
+        </button>
+      </TrackerCard>
+
+      {/* Coffee */}
+      <TrackerCard icon={<Coffee size={16} />} label={`Кофе: ${entry.coffee} чашек`}>
+        <div className="flex gap-2">
+          {[0, 1, 2, 3, 4, 5].map(n => (
+            <button key={n} onClick={() => update({ coffee: n })}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
+                ${entry.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        {entry.coffee > 2 && <p className="text-[10px] text-status-yellow mt-2">⚠️ Более 2 чашек может влиять на сон и аппетит</p>}
+      </TrackerCard>
+
+      {/* Water */}
+      <TrackerCard icon={<Droplets size={16} />} label={`Вода: ${waterLiters.toFixed(1)} л / ${waterNormL} л`}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <button onClick={() => update({ water: Math.max(0, glasses - 1) })}
+              className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground font-bold text-lg transition-all active:scale-95 hover:bg-secondary/70">−</button>
+            <div className="flex-1">
+              <div className="h-3 rounded-full bg-secondary overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${waterPct}%`, backgroundColor: waterPct >= 100 ? 'hsl(var(--status-green))' : waterPct >= 60 ? 'hsl(var(--status-yellow))' : 'hsl(210, 80%, 55%)' }} />
+              </div>
+            </div>
+            <button onClick={() => update({ water: glasses + 1 })}
+              className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground font-bold text-lg transition-all active:scale-95 hover:bg-secondary/70">+</button>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            {waterPct >= 100 ? '✅ Норма выполнена!' : `Рекомендация: ${waterNormL} л (${waterNormGlasses} стаканов) в день`}
+          </p>
+        </div>
+      </TrackerCard>
+
+      {/* Sleep */}
+      <TrackerCard icon={<Moon size={16} />} label={`Сон: ${sleepHours > 0 ? `${sleepHours} ч` : '—'}`}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground w-12">Часы:</span>
+            <input type="number" step="0.5" min="0" max="24" value={sleepHours > 0 ? sleepHours : ''} placeholder="0"
+              onChange={e => { const v = parseFloat(e.target.value); update({ sleepHours: !isNaN(v) && v >= 0 ? Math.min(24, v) : 0 }); }}
+              className="w-16 bg-secondary text-center text-sm font-medium rounded-lg py-1.5 outline-none focus:ring-2 focus:ring-ring tabular-nums" />
+            <div className="flex-1 flex gap-1">
+              {[6, 7, 8, 9].map(h => (
+                <button key={h} onClick={() => update({ sleepHours: h })}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95
+                    ${sleepHours === h ? 'bg-foreground text-background shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+                  {h}ч
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-muted-foreground">Качество:</span>
+              <span className="text-xs font-medium">{qualityLabels[sleepQuality]}</span>
+            </div>
+            <input type="range" min={1} max={5} value={sleepQuality}
+              onChange={e => update({ sleepQuality: Number(e.target.value) })}
+              className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5"><span>Плохо</span><span>Отлично</span></div>
+          </div>
+        </div>
+      </TrackerCard>
 
       {/* Macro Summary */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
