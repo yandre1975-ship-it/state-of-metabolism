@@ -415,17 +415,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                       <button
-                        onClick={() => {
-                          synthRef.current.cancel();
-                          const clean = msg.content.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
-                          const utt = new SpeechSynthesisUtterance(clean);
-                          utt.lang = 'ru-RU';
-                          utt.rate = 1.05;
-                          const voices = synthRef.current.getVoices();
-                          const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
-                          if (ruVoice) utt.voice = ruVoice;
-                          synthRef.current.speak(utt);
-                        }}
+                        onClick={() => doSpeak(msg.content)}
                         className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-md bg-secondary/80 text-muted-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
                         title="Прослушать"
                       >
