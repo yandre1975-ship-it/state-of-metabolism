@@ -1,6 +1,6 @@
 import { getEntries, getChecklist, getProfile, getTodayExercises, type DailyEntry } from '@/lib/storage';
 import { getAdaptationWarnings } from '@/lib/dailyPlan';
-import { TrendingDown, TrendingUp, Minus, AlertTriangle, Award, BarChart3 } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, AlertTriangle, Award, BarChart3, Moon } from 'lucide-react';
 
 export default function WeeklyReview() {
   const entries = getEntries();
