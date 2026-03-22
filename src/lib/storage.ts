@@ -36,6 +36,7 @@ export interface ExerciseEntry {
   sets?: number;
   minutes?: number;
   done: boolean;
+  slot: 'morning' | 'afternoon' | 'evening';
 }
 
 export interface DailyExercises {
