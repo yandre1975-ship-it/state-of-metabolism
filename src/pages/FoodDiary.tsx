@@ -55,11 +55,21 @@ export default function FoodDiary() {
 
   const remove = (id: string) => save(food.items.filter(i => i.id !== id));
 
+  if (showHistory) return <FoodHistory onBack={() => setShowHistory(false)} />;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Macro Summary */}
       <div className="rounded-2xl bg-card border p-5 shadow-sm">
-        <h3 className="font-semibold mb-4">Дневная норма</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Дневная норма</h3>
+          <button
+            onClick={() => setShowHistory(true)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+          >
+            <History size={14} /> История
+          </button>
+        </div>
         <div className="grid grid-cols-4 gap-3">
           <MacroRing label="Ккал" current={totals.cal} target={targets.calories} unit="" color="var(--foreground)" />
           <MacroRing label="Белки" current={totals.p} target={targets.protein} unit="г" color="hsl(var(--status-green))" />
