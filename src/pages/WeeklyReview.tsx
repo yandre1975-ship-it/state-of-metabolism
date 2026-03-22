@@ -219,7 +219,7 @@ function round(n: number, d: number): number {
   return Math.round(n * f) / f;
 }
 
-function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHunger: number, avgEnergy: number, profile: any): string {
+function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHunger: number, avgEnergy: number, avgSleep: number | null, avgQuality: number | null, profile: any): string {
   const parts: string[] = [];
 
   if (weightDelta !== null) {
@@ -238,6 +238,14 @@ function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHun
 
   if (avgEnergy <= 2.5) {
     parts.push('Низкая энергия мешает следовать плану. Приоритет — качество сна и управление стрессом.');
+  }
+
+  if (avgSleep !== null && avgSleep < 7) {
+    parts.push(`Средний сон ${avgSleep} ч — ниже нормы. Недосып повышает кортизол и аппетит.`);
+  }
+
+  if (avgQuality !== null && avgQuality < 3) {
+    parts.push('Низкое качество сна снижает восстановление. Попробуйте улучшить гигиену сна.');
   }
 
   const proteinDays = last7.filter(e => e.protein).length;
