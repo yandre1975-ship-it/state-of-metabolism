@@ -614,3 +614,15 @@ function MacroRing({ label, current, target, unit, color }: {
     </div>
   );
 }
+
+function TrackerCard({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-card border p-4 shadow-sm">
+      <div className="flex items-center gap-2 text-muted-foreground mb-3">
+        {icon}
+        <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
