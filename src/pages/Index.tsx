@@ -7,7 +7,6 @@ import { migrateLocalToCloud, getCloudProfile } from '@/lib/cloudStorage';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import FoodDiary from './FoodDiary';
-import HistoryDiary from './HistoryDiary';
 import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
 import AIChat from './AIChat';
