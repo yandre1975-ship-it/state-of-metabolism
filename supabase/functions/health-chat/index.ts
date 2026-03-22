@@ -6,33 +6,156 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are an AI health coach focused on weight loss and metabolic health.
-You speak Russian. Be concise — max 3-5 sentences per answer.
+// ── Agent Definitions ──
 
-Your job:
-- Analyze user behavior and health data
-- Identify root causes of problems (weight stagnation, hunger, low energy)
-- Give simple actionable steps (max 3-5)
-- Explain in simple, friendly language
+type AgentRole = "coach" | "nutrition" | "training" | "risk" | "reminder";
 
-You CAN discuss:
-- Hunger control strategies
-- Sustainable eating habits
-- Energy balance and metabolism
-- Exercise recommendations
-- Sleep and stress management
-- Insulin resistance basics
-- Macro balance (protein, carbs, fat)
+interface AgentConfig {
+  role: AgentRole;
+  label: string;
+  emoji: string;
+  prompt: string;
+}
 
-You must NEVER:
-- Give medical prescriptions or diagnose diseases
-- Recommend specific medications
-- Change or suggest medications
-- Provide treatment plans for medical conditions
+const AGENTS: Record<AgentRole, AgentConfig> = {
+  coach: {
+    role: "coach",
+    label: "Коуч",
+    emoji: "🧠",
+    prompt: `Ты — AI-коуч по здоровью и мотивации. Говоришь по-русски. Краток (3-5 предложений).
 
-If user describes concerning symptoms, always recommend consulting a doctor.
+Твоя задача:
+- Мотивировать пользователя и поддерживать
+- Объяснять простым языком почему что-то происходит с телом
+- Помогать формировать устойчивые привычки
+- Давать конкретные, выполнимые шаги (макс 3)
+- Задавать вопросы чтобы лучше понять состояние
 
-Focus on practical, daily actions the user can take right now.`;
+Стиль: дружелюбный, энергичный, но без давления. Как личный тренер-друг.
+Если не знаешь ответа — честно скажи. Не давай медицинских рекомендаций.`,
+  },
+
+  nutrition: {
+    role: "nutrition",
+    label: "Нутрициолог",
+    emoji: "🥗",
+    prompt: `Ты — AI-нутрициолог, специалист по питанию и метаболизму. Говоришь по-русски. Краток.
+
+Твоя задача:
+- Считать и анализировать питание пользователя
+- Предлагать замены продуктов (более полезные альтернативы)
+- Следить за аппетитом и углеводной нагрузкой
+- Объяснять влияние еды на голод, энергию, вес
+- Давать конкретные рекомендации что есть прямо сейчас
+
+Знания:
+- Инсулинорезистентность: снижать простые углеводы, увеличить белок и клетчатку
+- Контроль голода: белок + клетчатка + жиры в каждом приёме
+- Кортизол: избегать кофе натощак, не пропускать приёмы пищи
+- Гипотиреоз: йод, селен, достаточно калорий (не голодать)
+
+НЕЛЬЗЯ: назначать БАДы, лекарства, диагностировать болезни.`,
+  },
+
+  training: {
+    role: "training",
+    label: "Тренер",
+    emoji: "💪",
+    prompt: `Ты — AI-тренер по физической активности. Говоришь по-русски. Краток.
+
+Твоя задача:
+- Подбирать физнагрузку с учётом веса, сна, самочувствия
+- Учитывать уровень энергии — если энергия низкая, предлагать лёгкие варианты
+- Рекомендовать упражнения для дома без оборудования
+- Адаптировать под лишний вес (без прыжков, щадящие для суставов)
+- Объяснять связь активности и метаболизма
+
+Правила:
+- Если сон < 6 часов — рекомендовать только лёгкую прогулку
+- Если энергия 1-2/5 — только растяжка или дыхательные упражнения
+- Если вес > 100кг — исключить бег и прыжки, фокус на ходьбе и силовых
+- Всегда указывать примерные калории которые сожжёт упражнение
+
+НЕЛЬЗЯ: рекомендовать при болях без врача, спорт при плохом самочувствии.`,
+  },
+
+  risk: {
+    role: "risk",
+    label: "Аналитик рисков",
+    emoji: "🛡️",
+    prompt: `Ты — AI-аналитик здоровья и безопасности. Говоришь по-русски. Краток но серьёзен.
+
+Твоя задача:
+- Отслеживать красные флаги в данных пользователя
+- Предупреждать о рисках (переедание, истощение, перетренированность)
+- Не давать опасных рекомендаций
+- Рекомендовать обращение к врачу при тревожных симптомах
+
+Красные флаги:
+- Голод 5/5 постоянно → риск срыва, возможный дефицит калорий
+- Энергия 1/5 более 3 дней → возможное заболевание
+- Вес падает > 1кг/неделю → слишком агрессивный дефицит
+- Сон < 5 часов регулярно → риск гормональных нарушений
+- Кофе > 3 чашек + низкая энергия → зависимость от стимуляторов
+
+Всегда начинай с главного риска. Предложи 1-2 конкретных действия для снижения риска.
+Если симптомы серьёзные — НАСТОЯТЕЛЬНО рекомендуй врача.`,
+  },
+
+  reminder: {
+    role: "reminder",
+    label: "Планировщик",
+    emoji: "📋",
+    prompt: `Ты — AI-планировщик ежедневных действий. Говоришь по-русски. Ультра-краток.
+
+Твоя задача:
+- Формировать чёткий план действий на основе данных
+- Давать конкретные напоминания с привязкой ко времени
+- Адаптировать план под текущее состояние
+- Предлагать простые задания которые легко выполнить
+
+Формат ответа:
+Всегда давай план в виде списка с конкретными действиями и временем.
+Например:
+• Сейчас: выпить стакан воды
+• Через 1 час: перекус (творог + орехи)
+• Вечером: прогулка 20 минут
+
+Максимум 3-5 пунктов. Каждый пункт — одно действие.`,
+  },
+};
+
+// ── Agent Router ──
+// Classifies user message to the right agent based on keywords
+
+function routeToAgent(message: string, context: any): AgentRole {
+  const lower = message.toLowerCase();
+
+  // Risk detection first (safety priority)
+  const riskKeywords = ["боль", "болит", "тошн", "голов", "давлен", "сердц", "опасн", "врач", "больниц", "плох себя", "ужасн", "симптом", "кров", "обморок", "головокруж"];
+  if (riskKeywords.some(k => lower.includes(k))) return "risk";
+
+  // Check context for risk signals
+  if (context) {
+    if (context.hunger >= 5 || context.energy <= 1) return "risk";
+    if (context.sleepHours && context.sleepHours < 5 && context.energy <= 2) return "risk";
+  }
+
+  // Nutrition keywords
+  const nutritionKeywords = ["есть", "еда", "едь", "съесть", "калори", "белок", "углевод", "жир", "питан", "завтрак", "обед", "ужин", "перекус", "голод", "аппетит", "диет", "продукт", "рацион", "макро", "порц", "готови", "рецепт", "сахар", "инсулин"];
+  if (nutritionKeywords.some(k => lower.includes(k))) return "nutrition";
+
+  // Training keywords
+  const trainingKeywords = ["трениров", "упражнен", "спорт", "физ", "ходьб", "бег", "приседан", "отжиман", "планк", "активност", "шаг", "нагрузк", "разминк", "растяжк", "мышц", "кардио", "сжеч", "сжига"];
+  if (trainingKeywords.some(k => lower.includes(k))) return "training";
+
+  // Reminder/plan keywords
+  const planKeywords = ["план", "расписан", "напомн", "режим", "когда", "во сколько", "распоряд", "сегодня делать", "задач", "задани", "что дальше", "совет на"];
+  if (planKeywords.some(k => lower.includes(k))) return "reminder";
+
+  // Default to coach
+  return "coach";
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -40,21 +163,30 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, context } = await req.json();
+    const { messages, context, agent: requestedAgent } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Determine which agent to use
+    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
+    const agentRole: AgentRole = requestedAgent || routeToAgent(lastUserMsg, context);
+    const agent = AGENTS[agentRole];
+
     // Build context-aware system prompt
-    let systemContent = SYSTEM_PROMPT;
+    let systemContent = agent.prompt;
+
     if (context) {
       systemContent += `\n\nТекущие данные пользователя:
+- Имя: ${context.name || "не указано"}
 - Вес: ${context.weight || "не указан"} кг
 - Голод: ${context.hunger}/5
 - Энергия: ${context.energy}/5
 - Кофе: ${context.coffee} чашек
 - Белок: ${context.protein ? "да" : "нет"}
 - Активность: ${context.activity} мин
-- Цель: ${context.goal || "не указана"}`;
+- Цель: ${context.goal || "не указана"}
+- Сон: ${context.sleepHours || "не указан"} ч (качество: ${context.sleepQuality || "не указано"}/5)
+- Вода: ${context.waterLiters || "не указано"} л`;
       if (context.conditions?.length) {
         systemContent += `\n- Состояние здоровья: ${context.conditions.join(", ")}`;
       }
@@ -100,8 +232,15 @@ serve(async (req) => {
       );
     }
 
+    // Return streamed response with agent info header
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "X-Agent-Role": agentRole,
+        "X-Agent-Label": encodeURIComponent(agent.label),
+        "X-Agent-Emoji": encodeURIComponent(agent.emoji),
+      },
     });
   } catch (e) {
     console.error("chat error:", e);
