@@ -119,24 +119,63 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
   // Voice state
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [speechRate, setSpeechRate] = useState(() => {
+    try { return parseFloat(localStorage.getItem('tts_rate') || '1.05'); } catch { return 1.05; }
+  });
+  const [speechPitch, setSpeechPitch] = useState(() => {
+    try { return parseFloat(localStorage.getItem('tts_pitch') || '1'); } catch { return 1; }
+  });
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState(() => {
+    try { return localStorage.getItem('tts_voice') || ''; } catch { return ''; }
+  });
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef(window.speechSynthesis);
 
-  const speakText = useCallback((text: string) => {
-    if (!autoSpeak) return;
+  // Load voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = synthRef.current.getVoices().filter((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
+      if (voices.length > 0) setAvailableVoices(voices);
+    };
+    loadVoices();
+    synthRef.current.addEventListener?.('voiceschanged', loadVoices);
+    return () => synthRef.current.removeEventListener?.('voiceschanged', loadVoices);
+  }, []);
+
+  // Save settings
+  useEffect(() => {
+    localStorage.setItem('tts_rate', String(speechRate));
+    localStorage.setItem('tts_pitch', String(speechPitch));
+    localStorage.setItem('tts_voice', selectedVoiceURI);
+  }, [speechRate, speechPitch, selectedVoiceURI]);
+
+  const getSelectedVoice = useCallback(() => {
+    const voices = synthRef.current.getVoices();
+    if (selectedVoiceURI) {
+      const found = voices.find((v: SpeechSynthesisVoice) => v.voiceURI === selectedVoiceURI);
+      if (found) return found;
+    }
+    return voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru')) || null;
+  }, [selectedVoiceURI]);
+
+  const doSpeak = useCallback((text: string) => {
     synthRef.current.cancel();
-    // Strip markdown
     const clean = text.replace(/[*_#`>\-\[\]()!]/g, '').replace(/\n+/g, '. ');
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.lang = 'ru-RU';
-    utterance.rate = 1.05;
-    utterance.pitch = 1;
-    // Try to pick a Russian voice
-    const voices = synthRef.current.getVoices();
-    const ruVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('ru'));
-    if (ruVoice) utterance.voice = ruVoice;
+    utterance.rate = speechRate;
+    utterance.pitch = speechPitch;
+    const voice = getSelectedVoice();
+    if (voice) utterance.voice = voice;
     synthRef.current.speak(utterance);
-  }, [autoSpeak]);
+  }, [speechRate, speechPitch, getSelectedVoice]);
+
+  const speakText = useCallback((text: string) => {
+    if (!autoSpeak) return;
+    doSpeak(text);
+  }, [autoSpeak, doSpeak]);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
