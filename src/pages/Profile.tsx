@@ -226,7 +226,9 @@ export default function Profile() {
         </ul>
       </div>
 
-      {/* Save feedback */}
+      {/* Notifications */}
+      <NotificationSettings />
+
       {saved && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-status-green text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
           ✓ Сохранено
