@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { getProfile, saveProfile, calcDailyDeficit, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
-import { Check, User, Target } from 'lucide-react';
+import { saveCloudProfile } from '@/lib/cloudStorage';
+import { useAuth } from '@/contexts/AuthContext';
+import { Check, User, Target, LogOut } from 'lucide-react';
 import NotificationSettings from '@/components/NotificationSettings';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
@@ -11,6 +13,7 @@ const conditionsList: { id: HealthCondition; label: string; description: string 
 ];
 
 export default function Profile() {
+  const { signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const [saved, setSaved] = useState(false);
   const [nameStr, setNameStr] = useState(profile.name || '');
@@ -24,6 +27,7 @@ export default function Profile() {
     const next = { ...profile, ...patch };
     setProfile(next);
     saveProfile(next);
+    saveCloudProfile(next);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   };
@@ -228,6 +232,15 @@ export default function Profile() {
 
       {/* Notifications */}
       <NotificationSettings />
+
+      {/* Logout */}
+      <button
+        onClick={signOut}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-status-red-bg text-status-red font-medium text-sm active:scale-[0.97] transition-all"
+      >
+        <LogOut size={16} />
+        Выйти из аккаунта
+      </button>
 
       {saved && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-status-green text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">

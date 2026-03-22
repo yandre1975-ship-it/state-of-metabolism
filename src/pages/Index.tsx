@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2 } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
+import { useAuth } from '@/contexts/AuthContext';
+import { migrateLocalToCloud, getCloudProfile } from '@/lib/cloudStorage';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import FoodDiary from './FoodDiary';
@@ -9,6 +11,7 @@ import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
 import AIChat from './AIChat';
 import Onboarding from './Onboarding';
+import Auth from './Auth';
 import ProUpgrade, { ProGate } from '@/components/ProUpgrade';
 
 const tabs = [
@@ -23,12 +26,57 @@ const tabs = [
 type Tab = typeof tabs[number]['id'];
 
 export default function Index() {
+  const { user, loading } = useAuth();
   const [tab, setTab] = useState<Tab>('dashboard');
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [onboarded, setOnboarded] = useState(() => {
-    const p = getProfile();
-    return p.name.trim().length > 0;
-  });
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const [migrating, setMigrating] = useState(false);
+
+  // Check onboarding status
+  useEffect(() => {
+    if (!user) return;
+
+    const checkProfile = async () => {
+      const cloudProfile = await getCloudProfile();
+      if (cloudProfile && cloudProfile.name.trim().length > 0) {
+        setOnboarded(true);
+      } else {
+        // Check localStorage fallback
+        const localProfile = getProfile();
+        if (localProfile.name.trim().length > 0) {
+          // Migrate local data to cloud
+          setMigrating(true);
+          await migrateLocalToCloud();
+          setMigrating(false);
+          setOnboarded(true);
+        } else {
+          setOnboarded(false);
+        }
+      }
+    };
+    checkProfile();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
+
+  if (onboarded === null || migrating) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
+        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+        {migrating && <p className="text-sm text-muted-foreground">Переносим ваши данные...</p>}
+      </div>
+    );
+  }
 
   if (!onboarded) {
     return <Onboarding onComplete={() => setOnboarded(true)} />;

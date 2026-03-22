@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { saveProfile, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
+import { saveCloudProfile } from '@/lib/cloudStorage';
 import { Check, ArrowRight, ArrowLeft, Activity } from 'lucide-react';
 
 const problems = [
@@ -64,6 +65,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       targetDate: targetDate || undefined,
     };
     saveProfile(profile);
+    saveCloudProfile(profile);
     onComplete();
   };
 
