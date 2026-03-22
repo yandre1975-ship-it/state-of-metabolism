@@ -9,11 +9,14 @@ export interface DailyEntry {
 }
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
+export type Goal = 'lose' | 'maintain' | 'gain';
 
 export interface UserProfile {
   sex: 'male' | 'female';
   age: number;
   height: number; // cm
+  weight: number; // kg
+  goal: Goal;
   conditions: HealthCondition[];
 }
 
@@ -65,7 +68,7 @@ export function getProfile(): UserProfile {
     const stored = localStorage.getItem(PROFILE_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  return { sex: 'male', age: 30, height: 170, conditions: [] };
+  return { sex: 'male', age: 30, height: 170, weight: 75, goal: 'lose' as Goal, conditions: [] };
 }
 
 export function saveProfile(profile: UserProfile) {
@@ -202,9 +205,10 @@ export function getFoodByDate(date: string): DailyFood {
  * Mifflin-St Jeor with profile, health conditions, and activity.
  */
 export function calcMacroTargets(weight: number | null, activityMin: number, profile?: UserProfile) {
-  const w = weight || 75;
+  const w = weight || profile?.weight || 75;
   const age = profile?.age || 30;
   const height = profile?.height || 170;
+  const goal = profile?.goal || 'lose';
 
   // Mifflin-St Jeor BMR
   let bmr: number;
@@ -216,7 +220,10 @@ export function calcMacroTargets(weight: number | null, activityMin: number, pro
 
   // Activity calories
   const activityCal = activityMin * 5;
-  let totalCal = Math.round(bmr + activityCal - 300);
+
+  // Goal-based deficit/surplus
+  const goalAdjust = goal === 'lose' ? -400 : goal === 'gain' ? 300 : 0;
+  let totalCal = Math.round(bmr + activityCal + goalAdjust);
 
   // Macro split defaults: 30P / 40C / 30F
   let pPct = 0.3, cPct = 0.4, fPct = 0.3;

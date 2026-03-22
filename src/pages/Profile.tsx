@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getProfile, saveProfile, type UserProfile, type HealthCondition } from '@/lib/storage';
+import { getProfile, saveProfile, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
 import { Check, User } from 'lucide-react';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
@@ -55,33 +55,54 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Age & Height */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-2xl bg-card border p-5 shadow-sm">
-          <label className="flex items-center gap-2 text-muted-foreground mb-3">
-            <span className="text-xs font-medium uppercase tracking-wide">Возраст</span>
-          </label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={profile.age}
+      {/* Age, Height, Weight */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-2xl bg-card border p-4 shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Возраст</span>
+          <input type="number" inputMode="numeric" value={profile.age}
             onChange={e => update({ age: Math.max(10, Math.min(120, Number(e.target.value) || 0)) })}
-            className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums"
-          />
-          <span className="text-xs text-muted-foreground">лет</span>
+            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1" />
+          <span className="text-[11px] text-muted-foreground">лет</span>
         </div>
-        <div className="rounded-2xl bg-card border p-5 shadow-sm">
-          <label className="flex items-center gap-2 text-muted-foreground mb-3">
-            <span className="text-xs font-medium uppercase tracking-wide">Рост</span>
-          </label>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={profile.height}
+        <div className="rounded-2xl bg-card border p-4 shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Рост</span>
+          <input type="number" inputMode="numeric" value={profile.height}
             onChange={e => update({ height: Math.max(100, Math.min(250, Number(e.target.value) || 0)) })}
-            className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums"
-          />
-          <span className="text-xs text-muted-foreground">см</span>
+            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1" />
+          <span className="text-[11px] text-muted-foreground">см</span>
+        </div>
+        <div className="rounded-2xl bg-card border p-4 shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Вес</span>
+          <input type="number" inputMode="decimal" step="0.1" value={profile.weight}
+            onChange={e => update({ weight: Math.max(30, Math.min(300, Number(e.target.value) || 0)) })}
+            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1" />
+          <span className="text-[11px] text-muted-foreground">кг</span>
+        </div>
+      </div>
+
+      {/* Goal */}
+      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+        <div className="flex items-center gap-2 text-muted-foreground mb-3">
+          <span className="text-xs font-medium uppercase tracking-wide">Цель</span>
+        </div>
+        <div className="flex gap-2">
+          {([
+            { value: 'lose' as Goal, label: '🔥 Похудение', desc: '−400 ккал' },
+            { value: 'maintain' as Goal, label: '⚖️ Поддержание', desc: '±0 ккал' },
+            { value: 'gain' as Goal, label: '💪 Набор', desc: '+300 ккал' },
+          ]).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => update({ goal: opt.value })}
+              className={`flex-1 py-3 px-2 rounded-xl text-center transition-all duration-150 active:scale-95
+                ${profile.goal === opt.value
+                  ? 'bg-foreground text-background shadow-md'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
+            >
+              <span className="text-sm font-medium block">{opt.label}</span>
+              <span className="text-[10px] opacity-70">{opt.desc}</span>
+            </button>
+          ))}
         </div>
       </div>
 
