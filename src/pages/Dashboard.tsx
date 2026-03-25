@@ -1,7 +1,59 @@
-import { getTodayEntry, getStatus, getProfile, getTodayFood, getTodayExercises, calcBurnedCalories, calcMacroTargets, type Status } from '@/lib/storage';
+import { getTodayEntry, getStatus, getProfile, getTodayFood, getTodayExercises, calcBurnedCalories, calcMacroTargets, getEntries, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
 import { Target, AlertTriangle, TrendingUp } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
+
+const WEEKDAYS_RU = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+const MOTIVATIONS = [
+  'Каждый день — это новый шанс стать лучшей версией себя 💪',
+  'Маленькие шаги каждый день приводят к большим результатам 🚀',
+  'Ты уже сильнее, чем вчера. Продолжай! 🔥',
+  'Дисциплина — это мост между целями и результатами 🌉',
+  'Твоё тело — твой главный проект. Инвестируй в него 🏗️',
+  'Не сравнивай себя с другими. Сравнивай с собой вчерашним 📈',
+  'Успех — это сумма маленьких усилий, повторяемых каждый день ✨',
+  'Сегодня — идеальный день, чтобы начать действовать 🎯',
+  'Здоровье — это не пункт назначения, а путешествие 🌿',
+  'Ты можешь больше, чем думаешь. Поверь в себя! 🌟',
+  'Каждое повторение, каждый шаг — это инвестиция в будущее 💎',
+  'Привычки формируют характер. Характер формирует судьбу 🧭',
+  'Не жди идеального момента. Создай его сам 🛠️',
+  'Прогресс, а не совершенство — вот что важно 📊',
+  'Твоё здоровье — это капитал, который окупится сторицей 🏆',
+];
+
+function getMotivation(): string {
+  const today = new Date();
+  const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
+  return MOTIVATIONS[dayOfYear % MOTIVATIONS.length];
+}
+
+function getStreak(): number {
+  const entries = getEntries();
+  if (entries.length === 0) return 1;
+  const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+  const today = new Date().toISOString().slice(0, 10);
+  // Count consecutive days up to today
+  let streak = 0;
+  const d = new Date();
+  for (let i = 0; i < 365; i++) {
+    const dateStr = d.toISOString().slice(0, 10);
+    if (sorted.find(e => e.date === dateStr)) {
+      streak++;
+    } else if (dateStr !== today) {
+      break;
+    } else {
+      // today not yet tracked, still count
+      streak++;
+      d.setDate(d.getDate() - 1);
+      continue;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return Math.max(1, streak);
+}
 
 const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
   green: { bg: 'bg-status-green-bg', border: 'border-status-green/30', text: 'text-status-green', icon: '🔥' },
