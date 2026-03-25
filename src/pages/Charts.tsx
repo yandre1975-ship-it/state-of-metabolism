@@ -19,7 +19,7 @@ export default function Charts() {
   const { progressData, trendLine, forecastDate } = buildWeightProgress(weightEntries, targetWeight, targetDate);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-fade-up">
       {/* Weight Progress to Goal */}
       {targetWeight && weightEntries.length >= 1 && canAccess('weightForecast') && (
         <WeightProgressCard
@@ -32,8 +32,8 @@ export default function Charts() {
         />
       )}
       {targetWeight && weightEntries.length >= 1 && !canAccess('weightForecast') && (
-        <div className="rounded-2xl border-2 border-dashed border-status-yellow/30 p-6 flex items-center justify-center gap-3">
-          <Crown size={16} className="text-status-yellow" />
+        <div className="rounded-2xl glass-card p-6 flex items-center justify-center gap-3">
+          <Crown size={16} className="text-[hsl(250_90%_60%)]" />
           <span className="text-sm text-muted-foreground">Прогноз веса доступен в Pro</span>
         </div>
       )}
@@ -156,7 +156,7 @@ function WeightProgressCard({
   const maxY = Math.ceil(Math.max(...allValues) + 1);
 
   return (
-    <div className="rounded-2xl bg-card border p-5 shadow-sm">
+    <div className="rounded-2xl glass-card p-5">
       <div className="flex items-center gap-2 mb-1">
         <Target size={18} className="text-status-green" />
         <h3 className="font-semibold">Прогресс к цели</h3>
@@ -164,15 +164,15 @@ function WeightProgressCard({
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2 mb-4 mt-3">
-        <div className="text-center p-2 rounded-xl bg-secondary">
+          <div className="text-center p-2 rounded-xl glass-card">
           <p className="text-lg font-bold tabular-nums">{currentWeight}</p>
           <p className="text-[10px] text-muted-foreground">сейчас, кг</p>
         </div>
-        <div className="text-center p-2 rounded-xl bg-secondary">
+          <div className="text-center p-2 rounded-xl glass-card">
           <p className="text-lg font-bold tabular-nums text-status-green">{targetWeight}</p>
           <p className="text-[10px] text-muted-foreground">цель, кг</p>
         </div>
-        <div className="text-center p-2 rounded-xl bg-secondary">
+        <div className="text-center p-2 rounded-xl glass-card">
           <p className="text-lg font-bold tabular-nums">{remaining > 0 ? remaining : '✓'}</p>
           <p className="text-[10px] text-muted-foreground">{remaining > 0 ? 'осталось, кг' : 'цель достигнута'}</p>
         </div>
@@ -245,8 +245,8 @@ function ChartCard({ title, dataKey, data, color, unit = '', domain }: {
   title: string; dataKey: string; data: any[]; color: string; unit?: string; domain?: [number, number];
 }) {
   return (
-    <div className="rounded-2xl bg-card border p-5 shadow-sm">
-      <h3 className="font-semibold mb-4">{title}</h3>
+    <div className="rounded-2xl glass-card p-5">
+      <h3 className="font-bold mb-4">{title}</h3>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
