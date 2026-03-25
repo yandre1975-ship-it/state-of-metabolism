@@ -44,21 +44,21 @@ export default function Index() {
     if (!user) return;
 
     const checkProfile = async () => {
-      const cloudProfile = await getCloudProfile();
-      if (cloudProfile && cloudProfile.name.trim().length > 0) {
+      try {
+        const cloudProfile = await getCloudProfile();
+        if (cloudProfile && cloudProfile.name.trim().length > 0) {
+          setOnboarded(true);
+          return;
+        }
+      } catch {
+        // Cloud unavailable (e.g. no real auth session), fall through to localStorage
+      }
+      // Check localStorage fallback
+      const localProfile = getProfile();
+      if (localProfile.name.trim().length > 0) {
         setOnboarded(true);
       } else {
-        // Check localStorage fallback
-        const localProfile = getProfile();
-        if (localProfile.name.trim().length > 0) {
-          // Migrate local data to cloud
-          setMigrating(true);
-          await migrateLocalToCloud();
-          setMigrating(false);
-          setOnboarded(true);
-        } else {
-          setOnboarded(false);
-        }
+        setOnboarded(false);
       }
     };
     checkProfile();
