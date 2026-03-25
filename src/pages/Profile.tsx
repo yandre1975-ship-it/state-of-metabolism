@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getProfile, saveProfile, calcDailyDeficit, type UserProfile, type HealthCondition, type Goal } from '@/lib/storage';
 import { saveCloudProfile } from '@/lib/cloudStorage';
 import { useAuth } from '@/contexts/AuthContext';
-import { Check, User, Target, LogOut } from 'lucide-react';
+import { Check, User, Target, LogOut, Heart, Zap } from 'lucide-react';
 import NotificationSettings from '@/components/NotificationSettings';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 
@@ -41,15 +41,16 @@ export default function Profile() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* AI Risk Warnings */}
+    <div className="space-y-6 animate-fade-up">
       <AgentInsightBanner tab="profile" />
 
       {/* Name */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
-          <User size={16} />
-          <span className="text-xs font-medium uppercase tracking-wide">Имя</span>
+          <div className="w-8 h-8 rounded-lg gradient-accent-soft flex items-center justify-center">
+            <User size={16} className="text-[hsl(250_90%_60%)]" />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider">Имя</span>
         </div>
         <input
           type="text"
@@ -57,28 +58,27 @@ export default function Profile() {
           onChange={e => setNameStr(e.target.value)}
           onBlur={() => update({ name: nameStr.trim() })}
           placeholder="Введите ваше имя"
-          className="w-full bg-transparent text-xl font-semibold outline-none border-b border-input pb-1 placeholder:text-muted-foreground/40"
+          className="w-full bg-transparent text-xl font-bold outline-none border-b border-border/50 pb-1 focus:border-[hsl(250_90%_60%/0.5)] placeholder:text-muted-foreground/40 transition-colors"
         />
       </div>
 
       {/* Sex */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
-          <User size={16} />
-          <span className="text-xs font-medium uppercase tracking-wide">Пол</span>
+          <span className="text-xs font-semibold uppercase tracking-wider">Пол</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           {([
-            { value: 'male' as const, label: 'Мужской' },
-            { value: 'female' as const, label: 'Женский' },
+            { value: 'male' as const, label: '♂ Мужской' },
+            { value: 'female' as const, label: '♀ Женский' },
           ]).map(opt => (
             <button
               key={opt.value}
               onClick={() => update({ sex: opt.value })}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
+              className={`flex-1 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 active:scale-[0.96]
                 ${profile.sex === opt.value
-                  ? 'bg-foreground text-background shadow-md'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
+                  ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]'
+                  : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}
             >
               {opt.label}
             </button>
@@ -88,38 +88,31 @@ export default function Profile() {
 
       {/* Age, Height, Weight */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-card border p-4 shadow-sm">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Возраст</span>
-          <input type="number" inputMode="numeric" value={ageStr}
-            onChange={e => setAgeStr(e.target.value)}
-            onBlur={() => { const v = Math.max(10, Math.min(120, Number(ageStr) || 30)); setAgeStr(String(v)); update({ age: v }); }}
-            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
-          <span className="text-[11px] text-muted-foreground">лет</span>
-        </div>
-        <div className="rounded-2xl bg-card border p-4 shadow-sm">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Рост</span>
-          <input type="number" inputMode="numeric" value={heightStr}
-            onChange={e => setHeightStr(e.target.value)}
-            onBlur={() => { const v = Math.max(100, Math.min(250, Number(heightStr) || 170)); setHeightStr(String(v)); update({ height: v }); }}
-            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
-          <span className="text-[11px] text-muted-foreground">см</span>
-        </div>
-        <div className="rounded-2xl bg-card border p-4 shadow-sm">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Вес</span>
-          <input type="number" inputMode="decimal" step="0.1" value={weightStr}
-            onChange={e => setWeightStr(e.target.value)}
-            onBlur={() => { const v = Math.max(30, Math.min(300, Number(weightStr) || 75)); setWeightStr(String(v)); update({ weight: v }); }}
-            className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
-          <span className="text-[11px] text-muted-foreground">кг</span>
-        </div>
+        {[
+          { label: 'Возраст', value: ageStr, set: setAgeStr, unit: 'лет', blur: () => { const v = Math.max(10, Math.min(120, Number(ageStr) || 30)); setAgeStr(String(v)); update({ age: v }); } },
+          { label: 'Рост', value: heightStr, set: setHeightStr, unit: 'см', blur: () => { const v = Math.max(100, Math.min(250, Number(heightStr) || 170)); setHeightStr(String(v)); update({ height: v }); } },
+          { label: 'Вес', value: weightStr, set: setWeightStr, unit: 'кг', blur: () => { const v = Math.max(30, Math.min(300, Number(weightStr) || 75)); setWeightStr(String(v)); update({ weight: v }); } },
+        ].map(f => (
+          <div key={f.label} className="rounded-2xl glass-card p-4 hover:border-[hsl(250_90%_60%/0.3)] transition-colors">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{f.label}</span>
+            <input type="number" value={f.value}
+              onChange={e => f.set(e.target.value)}
+              onBlur={f.blur}
+              className="w-full bg-transparent text-2xl font-bold outline-none tabular-nums mt-1 border-b border-border/50 pb-1 focus:border-[hsl(250_90%_60%/0.5)] transition-colors" />
+            <span className="text-[11px] text-muted-foreground">{f.unit}</span>
+          </div>
+        ))}
       </div>
 
       {/* Goal */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
-          <span className="text-xs font-medium uppercase tracking-wide">Цель</span>
+          <div className="w-8 h-8 rounded-lg gradient-accent-soft flex items-center justify-center">
+            <Zap size={16} className="text-[hsl(250_90%_60%)]" />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider">Цель</span>
         </div>
-        <div className="flex gap-2">
+        <div className="space-y-2">
           {([
             { value: 'lose' as Goal, label: '🔥 Похудение', desc: '−400 ккал' },
             { value: 'maintain' as Goal, label: '⚖️ Поддержание', desc: '±0 ккал' },
@@ -128,22 +121,22 @@ export default function Profile() {
             <button
               key={opt.value}
               onClick={() => update({ goal: opt.value })}
-              className={`flex-1 py-3 px-2 rounded-xl text-center transition-all duration-150 active:scale-95
+              className={`w-full text-left p-4 rounded-2xl transition-all duration-300 active:scale-[0.98]
                 ${profile.goal === opt.value
-                  ? 'bg-foreground text-background shadow-md'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
+                  ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]'
+                  : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}
             >
-              <span className="text-sm font-medium block">{opt.label}</span>
-              <span className="text-[10px] opacity-70">{opt.desc}</span>
+              <span className="text-sm font-semibold">{opt.label}</span>
+              <span className={`text-xs block mt-0.5 ${profile.goal === opt.value ? 'text-white/70' : 'text-muted-foreground'}`}>{opt.desc}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Activity Level */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
-          <span className="text-xs font-medium uppercase tracking-wide">Уровень активности</span>
+          <span className="text-xs font-semibold uppercase tracking-wider">Уровень активности</span>
         </div>
         <div className="space-y-2">
           {([
@@ -155,27 +148,29 @@ export default function Profile() {
             <button
               key={opt.value}
               onClick={() => update({ activityLevel: opt.value })}
-              className={`w-full text-left p-4 rounded-xl transition-all duration-150 active:scale-[0.98]
+              className={`w-full text-left p-4 rounded-2xl transition-all duration-300 active:scale-[0.98]
                 ${profile.activityLevel === opt.value
-                  ? 'bg-foreground text-background shadow-md'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}
+                  ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]'
+                  : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}
             >
-              <span className="text-sm font-medium">{opt.label}</span>
-              <span className={`text-xs block mt-0.5 ${profile.activityLevel === opt.value ? 'opacity-70' : 'text-muted-foreground'}`}>{opt.desc}</span>
+              <span className="text-sm font-semibold">{opt.label}</span>
+              <span className={`text-xs block mt-0.5 ${profile.activityLevel === opt.value ? 'text-white/70' : 'text-muted-foreground'}`}>{opt.desc}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Target Weight & Date */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-2 text-muted-foreground mb-3">
-          <Target size={16} />
-          <span className="text-xs font-medium uppercase tracking-wide">Целевой вес и сроки</span>
+          <div className="w-8 h-8 rounded-lg gradient-accent-soft flex items-center justify-center">
+            <Target size={16} className="text-[hsl(250_90%_60%)]" />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider">Целевой вес и сроки</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Целевой вес</span>
+          <div className="rounded-xl glass-card p-3">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Целевой вес</span>
             <input type="number" inputMode="decimal" step="0.1" value={targetWeightStr}
               onChange={e => setTargetWeightStr(e.target.value)}
               onBlur={() => {
@@ -184,29 +179,28 @@ export default function Profile() {
                 update({ targetWeight: v });
               }}
               placeholder="—"
-              className="w-full bg-transparent text-xl font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
+              className="w-full bg-transparent text-xl font-bold outline-none tabular-nums mt-1 border-b border-border/50 pb-1 focus:border-[hsl(250_90%_60%/0.5)] transition-colors" />
             <span className="text-[11px] text-muted-foreground">кг</span>
           </div>
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">К дате</span>
+          <div className="rounded-xl glass-card p-3">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">К дате</span>
             <input type="date" value={targetDate}
               onChange={e => {
                 setTargetDate(e.target.value);
                 update({ targetDate: e.target.value || undefined });
               }}
               min={new Date().toISOString().slice(0, 10)}
-              className="w-full bg-transparent text-lg font-semibold outline-none tabular-nums mt-1 border-b border-input pb-1" />
+              className="w-full bg-transparent text-base font-bold outline-none tabular-nums mt-1 border-b border-border/50 pb-1 focus:border-[hsl(250_90%_60%/0.5)] transition-colors" />
           </div>
         </div>
 
-        {/* Deficit calculation */}
         {(() => {
           const deficit = calcDailyDeficit(profile);
           if (!deficit) return null;
           const safe = deficit.dailyDeficit <= 1000;
           return (
-            <div className={`mt-4 rounded-xl p-4 ${safe ? 'bg-status-green-bg' : 'bg-status-red-bg'}`}>
-              <p className="text-sm font-semibold mb-2">📊 План достижения цели</p>
+            <div className={`mt-4 rounded-2xl p-4 ${safe ? 'bg-gradient-to-r from-[hsl(152_60%_42%/0.1)] to-[hsl(170_60%_45%/0.1)] border border-[hsl(152_60%_42%/0.2)]' : 'bg-status-red-bg border border-[hsl(0_72%_51%/0.2)]'}`}>
+              <p className="text-sm font-bold mb-2">📊 План достижения цели</p>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-lg font-bold tabular-nums">{deficit.kgToLose}</p>
@@ -218,24 +212,27 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className={`text-lg font-bold tabular-nums ${safe ? 'text-status-green' : 'text-status-red'}`}>{deficit.dailyDeficit}</p>
-                  <p className="text-[10px] text-muted-foreground">ккал/день дефицит</p>
+                  <p className="text-[10px] text-muted-foreground">ккал/день</p>
                 </div>
               </div>
-              {!safe && (
-                <p className="text-xs text-status-red mt-2">⚠️ Дефицит &gt;1000 ккал/день небезопасен. Увеличьте срок или скорректируйте цель.</p>
-              )}
-              {safe && (
-                <p className="text-xs text-status-green mt-2">✓ Безопасный темп похудения</p>
-              )}
+              {!safe && <p className="text-xs text-status-red mt-2">⚠️ Дефицит &gt;1000 ккал/день небезопасен.</p>}
+              {safe && <p className="text-xs text-status-green mt-2">✓ Безопасный темп похудения</p>}
             </div>
           );
         })()}
       </div>
 
       {/* Health Conditions */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
-        <h3 className="font-semibold mb-1">Состояние здоровья</h3>
-        <p className="text-xs text-muted-foreground mb-4">Выберите, если применимо — это скорректирует расчёт нормы</p>
+      <div className="rounded-2xl glass-card p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg gradient-accent-soft flex items-center justify-center">
+            <Heart size={16} className="text-[hsl(250_90%_60%)]" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm">Состояние здоровья</h3>
+            <p className="text-[10px] text-muted-foreground">Выберите, если применимо</p>
+          </div>
+        </div>
         <ul className="space-y-2">
           {conditionsList.map(cond => {
             const active = profile.conditions.includes(cond.id);
@@ -243,16 +240,16 @@ export default function Profile() {
               <li key={cond.id}>
                 <button
                   onClick={() => toggleCondition(cond.id)}
-                  className={`w-full flex items-start gap-3 p-4 rounded-xl transition-all duration-150 active:scale-[0.98] text-left
-                    ${active ? 'bg-status-yellow-bg' : 'bg-secondary hover:bg-secondary/70'}`}
+                  className={`w-full flex items-start gap-3 p-4 rounded-2xl transition-all duration-300 active:scale-[0.98] text-left
+                    ${active ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}
                 >
                   <div className={`w-5 h-5 mt-0.5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors
-                    ${active ? 'bg-status-yellow text-white' : 'border-2 border-muted-foreground/25'}`}>
+                    ${active ? 'bg-white/20' : 'border-2 border-muted-foreground/25'}`}>
                     {active && <Check size={12} strokeWidth={3} />}
                   </div>
                   <div>
-                    <span className="text-sm font-medium">{cond.label}</span>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{cond.description}</p>
+                    <span className="text-sm font-semibold">{cond.label}</span>
+                    <p className={`text-[11px] mt-0.5 ${active ? 'text-white/70' : 'text-muted-foreground'}`}>{cond.description}</p>
                   </div>
                 </button>
               </li>
@@ -261,20 +258,19 @@ export default function Profile() {
         </ul>
       </div>
 
-      {/* Notifications */}
       <NotificationSettings />
 
       {/* Logout */}
       <button
         onClick={signOut}
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-status-red-bg text-status-red font-medium text-sm active:scale-[0.97] transition-all"
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl glass-card text-status-red font-semibold text-sm active:scale-[0.97] transition-all hover:border-[hsl(0_72%_51%/0.3)] hover:bg-status-red-bg/50"
       >
         <LogOut size={16} />
         Выйти из аккаунта
       </button>
 
       {saved && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-status-green text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 gradient-accent text-white px-5 py-2.5 rounded-2xl text-sm font-semibold shadow-xl shadow-[hsl(250_90%_60%/0.3)] animate-fade-up z-50">
           ✓ Сохранено
         </div>
       )}
