@@ -221,7 +221,15 @@ serve(async (req) => {
 - Активность сегодня: ${context.activity} мин
 - Цель: ${context.goal || "не указана"}
 - Сон: ${context.sleepHours || "не указан"} ч (качество: ${context.sleepQuality || "не указано"}/5)
-- Вода: ${context.waterLiters || "не указано"} л`;
+- Вода: ${context.waterLiters || "не указано"} л (${context.waterGlasses || 0} стаканов)
+
+ДНЕВНИК ПИТАНИЯ СЕГОДНЯ:
+- Съедено калорий: ${context.foodCalories || 0} ккал
+- Белки: ${context.foodProtein || 0} г, Углеводы: ${context.foodCarbs || 0} г, Жиры: ${context.foodFat || 0} г
+- Количество записей: ${context.mealsCount || 0}
+- Что ел: ${context.mealsEaten || "ничего не записано"}
+
+Используй эти данные из дневника чтобы давать КОНКРЕТНЫЕ советы. Например если мало белка — скажи сколько ещё нужно. Если калорий слишком мало/много — предупреди.`;
       if (context.conditions?.length) {
         systemContent += `\n- Состояние здоровья: ${context.conditions.join(", ")}`;
       }

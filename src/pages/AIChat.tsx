@@ -55,6 +55,12 @@ const QUICK_QUESTIONS: { text: string; agent?: AgentRole }[] = [
 function getContext() {
   const entry = getTodayEntry();
   const profile = getProfile();
+  const food = getTodayFood();
+  const foodTotals = food.items.reduce(
+    (a, i) => ({ cal: a.cal + i.calories, p: a.p + i.protein, c: a.c + i.carbs, f: a.f + i.fat }),
+    { cal: 0, p: 0, c: 0, f: 0 }
+  );
+  const meals = food.items.map(i => `${i.name} (${i.calories} ккал, Б${i.protein})`).join('; ');
   return {
     weight: entry.weight || profile.weight,
     hunger: entry.hunger,
@@ -73,6 +79,13 @@ function getContext() {
     sleepHours: entry.sleepHours,
     sleepQuality: entry.sleepQuality,
     waterLiters: ((entry.water || 0) * 250 / 1000).toFixed(1),
+    waterGlasses: entry.water || 0,
+    foodCalories: foodTotals.cal,
+    foodProtein: Math.round(foodTotals.p),
+    foodCarbs: Math.round(foodTotals.c),
+    foodFat: Math.round(foodTotals.f),
+    mealsEaten: meals || 'ничего не записано',
+    mealsCount: food.items.length,
   };
 }
 
