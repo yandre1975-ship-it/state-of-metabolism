@@ -84,10 +84,16 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
-      {/* Greeting */}
-      {profile.name && (
-        <p className="text-muted-foreground text-sm">Привет, <span className="font-semibold text-foreground">{profile.name}</span> 👋</p>
-      )}
+      {/* Greeting with date & motivation */}
+      <div className="rounded-2xl bg-card border p-4 shadow-sm space-y-1.5">
+        <p className="text-sm text-foreground font-semibold">
+          Привет{profile.name ? `, ${profile.name}` : ''} 👋
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Сегодня {WEEKDAYS_RU[new Date().getDay()]}, {new Date().getDate()} {MONTHS_RU[new Date().getMonth()]} {new Date().getFullYear()} — твой <span className="font-semibold text-foreground">{getStreak()}-й день</span>
+        </p>
+        <p className="text-xs text-primary/80 italic leading-relaxed mt-1">{getMotivation()}</p>
+      </div>
 
       {/* AI Agent Insights */}
       <AgentInsightBanner tab="dashboard" />
