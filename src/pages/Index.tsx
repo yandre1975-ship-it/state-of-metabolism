@@ -33,8 +33,13 @@ export default function Index() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [migrating, setMigrating] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Check onboarding status
+  // Force Dashboard refresh when switching to it
+  useEffect(() => {
+    if (tab === 'dashboard') setRefreshKey(k => k + 1);
+  }, [tab]);
+
   useEffect(() => {
     if (!user) return;
 
