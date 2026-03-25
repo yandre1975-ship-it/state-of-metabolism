@@ -41,6 +41,19 @@ export default function Index() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [onboarded, setOnboarded] = useState(() => checkOnboarded());
   const [refreshKey, setRefreshKey] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [displayTab, setDisplayTab] = useState<Tab>(tab);
+
+  useEffect(() => {
+    if (tab !== displayTab) {
+      setAnimating(true);
+      const t = setTimeout(() => {
+        setDisplayTab(tab);
+        setAnimating(false);
+      }, 150);
+      return () => clearTimeout(t);
+    }
+  }, [tab, displayTab]);
 
   if (loading) {
     return (
@@ -65,20 +78,6 @@ export default function Index() {
   }
 
   const pro = isPro();
-
-  const [animating, setAnimating] = useState(false);
-  const [displayTab, setDisplayTab] = useState<Tab>(tab);
-
-  useEffect(() => {
-    if (tab !== displayTab) {
-      setAnimating(true);
-      const t = setTimeout(() => {
-        setDisplayTab(tab);
-        setAnimating(false);
-      }, 150);
-      return () => clearTimeout(t);
-    }
-  }, [tab, displayTab]);
 
   const renderTab = () => {
     switch (displayTab) {
