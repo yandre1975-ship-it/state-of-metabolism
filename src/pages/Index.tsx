@@ -10,6 +10,7 @@ import FoodDiary from './FoodDiary';
 import Profile from './Profile';
 import WeeklyReview from './WeeklyReview';
 import AIChat from './AIChat';
+import WorkoutPrograms from './WorkoutPrograms';
 import Onboarding from './Onboarding';
 import Auth from './Auth';
 import ProUpgrade, { ProGate } from '@/components/ProUpgrade';
@@ -18,6 +19,7 @@ const tabs = [
   { id: 'profile', label: 'Профиль', icon: User },
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
   { id: 'food', label: 'Дневник', icon: BookOpen },
+  { id: 'workouts', label: 'Тренировки', icon: Dumbbell },
   { id: 'chat', label: 'AI Коуч', icon: MessageCircle },
   { id: 'weekly', label: 'Неделя', icon: CalendarDays, proFeature: 'weeklyReview' as const },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
@@ -92,6 +94,7 @@ export default function Index() {
     switch (tab) {
       case 'dashboard': return <Dashboard />;
       case 'food': return <FoodDiary />;
+      case 'workouts': return <WorkoutPrograms />;
       case 'chat': return <AIChat onNavigateToFood={() => setTab('food')} />;
       case 'weekly':
         return canAccess('weeklyReview')
