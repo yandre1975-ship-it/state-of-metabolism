@@ -56,6 +56,7 @@ function getContext() {
   const entry = getTodayEntry();
   const profile = getProfile();
   const food = getTodayFood();
+  const targets = calcMacroTargets(entry.weight, entry.activity, profile);
   const foodTotals = food.items.reduce(
     (a, i) => ({ cal: a.cal + i.calories, p: a.p + i.protein, c: a.c + i.carbs, f: a.f + i.fat }),
     { cal: 0, p: 0, c: 0, f: 0 }
@@ -86,6 +87,14 @@ function getContext() {
     foodFat: Math.round(foodTotals.f),
     mealsEaten: meals || 'ничего не записано',
     mealsCount: food.items.length,
+    targetCalories: targets.calories,
+    targetProtein: targets.protein,
+    targetCarbs: targets.carbs,
+    targetFat: targets.fat,
+    remainingCalories: targets.calories - foodTotals.cal,
+    remainingProtein: Math.round(targets.protein - foodTotals.p),
+    remainingCarbs: Math.round(targets.carbs - foodTotals.c),
+    remainingFat: Math.round(targets.fat - foodTotals.f),
   };
 }
 
