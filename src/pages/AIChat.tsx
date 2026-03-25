@@ -103,6 +103,7 @@ function buildProactivePrompt(): string {
   const profile = getProfile();
   const { status } = getStatus(entry);
   const hour = new Date().getHours();
+  const ctx = getContext();
 
   const parts: string[] = [];
 
@@ -128,7 +129,32 @@ function buildProactivePrompt(): string {
   if (entry.coffee > 2) parts.push('Много кофе.');
   if ((entry.sleepHours || 0) > 0 && entry.sleepHours < 6) parts.push('Мало сна — упомяни важность восстановления.');
 
-  parts.push(`Обратись по имени (${profile.name || 'друг'}). Будь кратким (2-4 предложения). Задай вопрос.`);
+  // Macro alerts based on time of day
+  const calPct = ctx.targetCalories ? Math.round((ctx.foodCalories / ctx.targetCalories) * 100) : 0;
+  const protPct = ctx.targetProtein ? Math.round((ctx.foodProtein / ctx.targetProtein) * 100) : 0;
+
+  if (hour >= 15) {
+    // Afternoon/evening: check if eating too little
+    if (calPct < 40 && hour >= 15) {
+      parts.push(`ВНИМАНИЕ: к ${hour}:00 съедено всего ${calPct}% калорий (${ctx.foodCalories} из ${ctx.targetCalories} ккал). Это слишком мало — предупреди о риске срыва вечером и предложи что съесть.`);
+    }
+    if (protPct < 30 && hour >= 15) {
+      parts.push(`ВНИМАНИЕ: белка съедено только ${protPct}% (${ctx.foodProtein}г из ${ctx.targetProtein}г). Настоятельно рекомендуй добавить белковую пищу.`);
+    }
+    if (calPct > 90 && hour < 19) {
+      parts.push(`ВНИМАНИЕ: уже съедено ${calPct}% калорий (${ctx.foodCalories} из ${ctx.targetCalories} ккал), а впереди ещё ужин. Предупреди о переборе и предложи лёгкий ужин.`);
+    }
+  }
+  if (hour >= 19) {
+    if (calPct > 100) {
+      parts.push(`ПЕРЕБОР: съедено ${ctx.foodCalories} ккал из ${ctx.targetCalories} (${calPct}%). Предупреди мягко, но чётко. Предложи лёгкую прогулку.`);
+    }
+    if (calPct < 60) {
+      parts.push(`НЕДОБОР: к вечеру съедено только ${calPct}% нормы. Нельзя голодать — это замедлит метаболизм. Предложи полноценный ужин.`);
+    }
+  }
+
+  parts.push(`Обратись по имени (${profile.name || 'друг'}). Будь кратким (2-4 предложения). Обязательно укажи остаток: ${ctx.remainingCalories} ккал, Б${ctx.remainingProtein}г. Задай вопрос.`);
 
   return parts.join(' ');
 }
