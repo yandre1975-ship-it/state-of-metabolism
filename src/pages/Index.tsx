@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2, BookOpen, Sparkles } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
