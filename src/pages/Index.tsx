@@ -66,8 +66,22 @@ export default function Index() {
 
   const pro = isPro();
 
+  const [animating, setAnimating] = useState(false);
+  const [displayTab, setDisplayTab] = useState<Tab>(tab);
+
+  useEffect(() => {
+    if (tab !== displayTab) {
+      setAnimating(true);
+      const t = setTimeout(() => {
+        setDisplayTab(tab);
+        setAnimating(false);
+      }, 150);
+      return () => clearTimeout(t);
+    }
+  }, [tab, displayTab]);
+
   const renderTab = () => {
-    switch (tab) {
+    switch (displayTab) {
       case 'dashboard': return <Dashboard key={refreshKey} />;
       case 'food': return <FoodDiary />;
       case 'workouts': return <WorkoutPrograms />;
@@ -99,7 +113,11 @@ export default function Index() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-5 pb-24">
-        {renderTab()}
+        <div
+          className={`transition-all duration-150 ease-out ${animating ? 'opacity-0 translate-y-2 scale-[0.98]' : 'opacity-100 translate-y-0 scale-100'}`}
+        >
+          {renderTab()}
+        </div>
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 bg-background/60 backdrop-blur-xl border-t border-border/50 z-10">
