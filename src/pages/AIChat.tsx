@@ -424,16 +424,16 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-300">
+    <div className="flex flex-col h-[calc(100vh-8rem)] animate-fade-up">
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pb-4">
         {messages.length === 0 && !isLoading && (
           <div className="text-center pt-12 space-y-6">
-            <div className="w-14 h-14 rounded-2xl bg-foreground text-background flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-2xl gradient-accent text-white flex items-center justify-center mx-auto shadow-lg shadow-[hsl(250_90%_60%/0.3)]">
               <Bot size={28} />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">AI Health Team</h3>
+              <h3 className="font-bold text-lg gradient-text">AI Health Team</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-[260px] mx-auto leading-relaxed">
                 5 специализированных агентов
               </p>
@@ -441,7 +441,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
             {/* Agent cards */}
             <div className="grid grid-cols-5 gap-1.5 px-2 max-w-sm mx-auto">
               {(Object.entries(AGENT_META) as [AgentRole, typeof AGENT_META[AgentRole]][]).map(([role, meta]) => (
-                <div key={role} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-card border">
+                <div key={role} className="flex flex-col items-center gap-1 p-2 rounded-xl glass-card">
                   <span className="text-lg">{meta.emoji}</span>
                   <span className="text-[9px] text-muted-foreground leading-tight text-center">{meta.label}</span>
                 </div>
@@ -456,7 +456,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
             <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : ''}`}>
               {msg.role === 'assistant' && (
                 <div className="flex flex-col items-center gap-0.5 flex-shrink-0 mt-1">
-                  <div className={`w-7 h-7 rounded-lg bg-foreground text-background flex items-center justify-center`}>
+                  <div className={`w-7 h-7 rounded-lg gradient-accent text-white flex items-center justify-center`}>
                     {agentMeta ? <span className="text-xs">{agentMeta.emoji}</span> : <Bot size={14} />}
                   </div>
                 </div>
@@ -469,8 +469,8 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
                 )}
                 <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed relative group
                   ${msg.role === 'user'
-                    ? 'bg-foreground text-background rounded-br-md'
-                    : 'bg-card border rounded-bl-md'}`}>
+                    ? 'gradient-accent text-white rounded-br-md shadow-lg shadow-[hsl(250_90%_60%/0.2)]'
+                    : 'glass-card rounded-bl-md'}`}>
                   {msg.role === 'assistant' ? (
                     <>
                       <div className="prose prose-sm max-w-none [&_p]:mb-1.5 [&_ul]:mb-1.5 [&_li]:mb-0.5">
@@ -571,7 +571,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
                 })()}
               </div>
               {msg.role === 'user' && (
-                <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0 mt-1">
+                <div className="w-7 h-7 rounded-lg glass-card flex items-center justify-center flex-shrink-0 mt-1">
                   <User size={14} />
                 </div>
               )}
@@ -581,7 +581,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
 
         {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
           <div className="flex gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-foreground text-background flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg gradient-accent text-white flex items-center justify-center flex-shrink-0">
               {activeAgent ? <span className="text-xs">{AGENT_META[activeAgent].emoji}</span> : <Bot size={14} />}
             </div>
             <div>
@@ -590,7 +590,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
                   {AGENT_META[activeAgent].label} думает...
                 </span>
               )}
-              <div className="bg-card border rounded-2xl rounded-bl-md px-4 py-3">
+              <div className="glass-card rounded-2xl rounded-bl-md px-4 py-3">
                 <Loader2 size={16} className="animate-spin text-muted-foreground" />
               </div>
             </div>
@@ -612,7 +612,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
             const meta = q.agent ? AGENT_META[q.agent] : null;
             return (
               <button key={q.text} onClick={() => sendMessage(q.text, q.agent)}
-                className="px-3 py-2 rounded-xl bg-card border text-xs font-medium active:scale-95 transition-all hover:bg-secondary flex items-center gap-1.5">
+                className="px-3 py-2 rounded-xl glass-card text-xs font-medium active:scale-95 transition-all hover:border-[hsl(250_90%_60%/0.3)] flex items-center gap-1.5">
                 {meta && <span className="text-sm">{meta.emoji}</span>}
                 {q.text}
               </button>
@@ -623,7 +623,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
 
       {/* Voice settings panel */}
       {showVoiceSettings && (
-        <div className="mb-3 p-4 rounded-2xl bg-card border shadow-sm space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="mb-3 p-4 rounded-2xl glass-card space-y-4 animate-fade-up">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">⚙️ Настройки голоса</span>
             <button onClick={() => setShowVoiceSettings(false)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
@@ -722,7 +722,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
           placeholder={isListening ? 'Говорите...' : 'Спросите что-нибудь...'}
           disabled={isLoading}
-          className={`flex-1 bg-card border rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/50 disabled:opacity-50
+          className={`flex-1 glass-card rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[hsl(250_90%_60%/0.5)] placeholder:text-muted-foreground/50 disabled:opacity-50
             ${isListening ? 'border-red-400 ring-2 ring-red-400/30' : ''}`}
         />
 
