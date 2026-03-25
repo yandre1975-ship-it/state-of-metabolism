@@ -12,7 +12,7 @@ interface AuthContextType {
 const fakeUser = { id: 'dev-user', email: 'dev@local' } as unknown as User;
 
 const handleSignOut = async () => {
-  localStorage.removeItem('health_profile');
+  localStorage.removeItem('metabolic_profile');
   window.location.reload();
 };
 
