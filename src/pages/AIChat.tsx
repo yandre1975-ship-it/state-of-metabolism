@@ -743,7 +743,7 @@ export default function AIChat({ onNavigateToFood }: { onNavigateToFood?: () => 
         <button
           onClick={() => sendMessage(input)}
           disabled={!input.trim() || isLoading}
-          className="w-10 h-10 rounded-xl bg-foreground text-background flex items-center justify-center active:scale-95 transition-all disabled:opacity-40 flex-shrink-0"
+          className="w-10 h-10 rounded-xl gradient-accent text-white flex items-center justify-center active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 shadow-md shadow-[hsl(250_90%_60%/0.2)]"
         >
           <Send size={16} />
         </button>
