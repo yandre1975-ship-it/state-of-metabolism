@@ -43,25 +43,13 @@ export default function Index() {
   useEffect(() => {
     if (!user) return;
 
-    const checkProfile = async () => {
-      try {
-        const cloudProfile = await getCloudProfile();
-        if (cloudProfile && cloudProfile.name.trim().length > 0) {
-          setOnboarded(true);
-          return;
-        }
-      } catch {
-        // Cloud unavailable (e.g. no real auth session), fall through to localStorage
-      }
-      // Check localStorage fallback
-      const localProfile = getProfile();
-      if (localProfile.name.trim().length > 0) {
-        setOnboarded(true);
-      } else {
-        setOnboarded(false);
-      }
-    };
-    checkProfile();
+    // Skip cloud check — use localStorage only (auth is disabled)
+    const localProfile = getProfile();
+    if (localProfile.name.trim().length > 0) {
+      setOnboarded(true);
+    } else {
+      setOnboarded(false);
+    }
   }, [user]);
 
   if (loading) {
