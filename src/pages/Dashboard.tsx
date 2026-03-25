@@ -1,6 +1,6 @@
 import { getTodayEntry, getStatus, getProfile, getTodayFood, getTodayExercises, calcBurnedCalories, calcMacroTargets, getEntries, type Status } from '@/lib/storage';
 import { generateDailyPlan, getAdaptationWarnings } from '@/lib/dailyPlan';
-import { Target, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Target, AlertTriangle, TrendingUp, Sparkles, Zap } from 'lucide-react';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const WEEKDAYS_RU = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -35,7 +35,6 @@ function getStreak(): number {
   if (entries.length === 0) return 1;
   const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
   const today = new Date().toISOString().slice(0, 10);
-  // Count consecutive days up to today
   let streak = 0;
   const d = new Date();
   for (let i = 0; i < 365; i++) {
@@ -45,7 +44,6 @@ function getStreak(): number {
     } else if (dateStr !== today) {
       break;
     } else {
-      // today not yet tracked, still count
       streak++;
       d.setDate(d.getDate() - 1);
       continue;
@@ -55,10 +53,10 @@ function getStreak(): number {
   return Math.max(1, streak);
 }
 
-const statusConfig: Record<Status, { bg: string; border: string; text: string; icon: string }> = {
-  green: { bg: 'bg-status-green-bg', border: 'border-status-green/30', text: 'text-status-green', icon: '🔥' },
-  yellow: { bg: 'bg-status-yellow-bg', border: 'border-status-yellow/30', text: 'text-status-yellow', icon: '⚠️' },
-  red: { bg: 'bg-status-red-bg', border: 'border-status-red/30', text: 'text-status-red', icon: '🛑' },
+const statusConfig: Record<Status, { gradient: string; text: string; icon: string; label: string }> = {
+  green: { gradient: 'from-[hsl(152_60%_42%)] to-[hsl(170_60%_45%)]', text: 'text-white', icon: '🔥', label: 'Все показатели в норме' },
+  yellow: { gradient: 'from-[hsl(40_90%_50%)] to-[hsl(30_90%_55%)]', text: 'text-white', icon: '⚠️', label: 'Есть что улучшить' },
+  red: { gradient: 'from-[hsl(0_72%_51%)] to-[hsl(350_70%_55%)]', text: 'text-white', icon: '🛑', label: 'Требуется внимание' },
 };
 
 export default function Dashboard() {
@@ -69,7 +67,6 @@ export default function Dashboard() {
   const plan = generateDailyPlan(entry, profile);
   const warnings = getAdaptationWarnings(profile);
 
-  // Today's food & exercise summary
   const food = getTodayFood();
   const exercises = getTodayExercises();
   const burned = Math.round(calcBurnedCalories(exercises));
@@ -83,39 +80,45 @@ export default function Dashboard() {
   const waterNormL = ((Math.round((profile.weight || 75) * 30)) / 1000).toFixed(1);
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500">
-      {/* Greeting with date & motivation */}
-      <div className="rounded-2xl bg-card border p-4 shadow-sm space-y-1.5">
-        <p className="text-sm text-foreground font-semibold">
-          Привет{profile.name ? `, ${profile.name}` : ''} 👋
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Сегодня {WEEKDAYS_RU[new Date().getDay()]}, {new Date().getDate()} {MONTHS_RU[new Date().getMonth()]} {new Date().getFullYear()} — твой <span className="font-semibold text-foreground">{getStreak()}-й день</span>
-        </p>
-        <p className="text-xs text-primary/80 italic leading-relaxed mt-1">{getMotivation()}</p>
+    <div className="space-y-5 animate-fade-up">
+      {/* Greeting */}
+      <div className="rounded-2xl glass-card p-5 space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center shadow-md shadow-[hsl(250_90%_60%/0.2)]">
+            <Sparkles size={18} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold">
+              Привет{profile.name ? `, ${profile.name}` : ''} 👋
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Сегодня {WEEKDAYS_RU[new Date().getDay()]}, {new Date().getDate()} {MONTHS_RU[new Date().getMonth()]} — <span className="font-semibold gradient-text">{getStreak()}-й день</span>
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground/80 italic leading-relaxed">{getMotivation()}</p>
       </div>
 
-      {/* AI Agent Insights */}
       <AgentInsightBanner tab="dashboard" />
 
       {/* Status Card */}
-      <div className={`rounded-2xl border-2 ${cfg.border} ${cfg.bg} p-5 transition-colors duration-300`}>
+      <div className={`rounded-2xl bg-gradient-to-r ${cfg.gradient} p-5 shadow-lg transition-all duration-300`}>
         <div className="flex items-center gap-3">
           <span className="text-3xl">{cfg.icon}</span>
           <div>
-            <p className={`text-lg font-semibold ${cfg.text}`}>{message}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {status === 'green' ? 'Все показатели в норме' : status === 'red' ? 'Требуется внимание' : 'Есть что улучшить'}
-            </p>
+            <p className={`text-lg font-bold ${cfg.text}`}>{message}</p>
+            <p className={`text-xs ${cfg.text} opacity-80 mt-0.5`}>{cfg.label}</p>
           </div>
         </div>
       </div>
 
-      {/* Today's Progress Summary */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      {/* Today's Progress */}
+      <div className="rounded-2xl glass-card p-5 animate-fade-up-delay">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={16} className="text-foreground" />
-          <h3 className="font-semibold text-sm">Прогресс сегодня</h3>
+          <div className="w-8 h-8 rounded-lg gradient-accent-soft flex items-center justify-center">
+            <TrendingUp size={16} className="text-[hsl(250_90%_60%)]" />
+          </div>
+          <h3 className="font-bold text-sm">Прогресс сегодня</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <ProgressChip label="Калории" value={`${foodTotals.cal} / ${targets.calories}`} unit="ккал" pct={Math.min(100, Math.round(foodTotals.cal / targets.calories * 100))} />
@@ -136,14 +139,16 @@ export default function Dashboard() {
       </div>
 
       {/* Daily Plan */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5 animate-fade-up-delay">
         <div className="flex items-center gap-2 mb-3">
-          <Target size={16} className="text-foreground" />
-          <h3 className="font-semibold text-sm">План на сегодня</h3>
+          <div className="w-8 h-8 rounded-lg gradient-accent-soft flex items-center justify-center">
+            <Target size={16} className="text-[hsl(250_90%_60%)]" />
+          </div>
+          <h3 className="font-bold text-sm">План на сегодня</h3>
         </div>
         <ul className="space-y-2">
           {plan.actions.map((action, i) => (
-            <li key={i} className="text-sm leading-relaxed p-3 rounded-xl bg-secondary">
+            <li key={i} className="text-sm leading-relaxed p-3 rounded-xl glass-card">
               {action}
             </li>
           ))}
@@ -159,8 +164,11 @@ export default function Dashboard() {
 
       {/* Adaptation Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-2xl border border-status-yellow/30 bg-status-yellow-bg p-4">
-          <p className="text-xs font-medium text-status-yellow mb-2">🔄 Адаптация</p>
+        <div className="rounded-2xl glass-card border-[hsl(40_90%_50%/0.3)] bg-status-yellow-bg/50 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={14} className="text-status-yellow" />
+            <p className="text-xs font-semibold text-status-yellow">Адаптация</p>
+          </div>
           {warnings.map((w, i) => (
             <p key={i} className="text-xs text-muted-foreground">{w}</p>
           ))}
@@ -168,7 +176,7 @@ export default function Dashboard() {
       )}
 
       {/* Safety */}
-      <div className="rounded-2xl bg-secondary/50 p-4">
+      <div className="rounded-2xl glass-card p-4">
         <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
           ⚠️ Не является медицинской рекомендацией. При наличии симптомов обратитесь к врачу.
         </p>
@@ -179,28 +187,32 @@ export default function Dashboard() {
 
 function ProgressChip({ label, value, unit, pct }: { label: string; value: string; unit: string; pct: number }) {
   return (
-    <div className="rounded-xl bg-secondary p-3">
+    <div className="rounded-xl glass-card p-3">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</span>
         <span className="text-[10px] text-muted-foreground tabular-nums">{pct}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-background/60 overflow-hidden mb-1.5">
+      <div className="h-1.5 rounded-full bg-border/50 overflow-hidden mb-1.5">
         <div
-          className="h-full rounded-full transition-all duration-500"
+          className="h-full rounded-full transition-all duration-700"
           style={{
             width: `${pct}%`,
-            backgroundColor: pct >= 80 ? 'hsl(var(--status-green))' : pct >= 40 ? 'hsl(var(--status-yellow))' : 'hsl(var(--muted-foreground))',
+            background: pct >= 80
+              ? 'linear-gradient(90deg, hsl(152 60% 42%), hsl(170 60% 45%))'
+              : pct >= 40
+              ? 'linear-gradient(90deg, hsl(40 90% 50%), hsl(30 90% 55%))'
+              : 'linear-gradient(135deg, hsl(250 90% 60%), hsl(190 95% 50%))',
           }}
         />
       </div>
-      <p className="text-xs font-medium tabular-nums">{value} <span className="text-muted-foreground font-normal">{unit}</span></p>
+      <p className="text-xs font-semibold tabular-nums">{value} <span className="text-muted-foreground font-normal">{unit}</span></p>
     </div>
   );
 }
 
 function ReadChip({ icon, text }: { icon: string; text: string }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-secondary text-[11px] font-medium tabular-nums">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg glass-card text-[11px] font-medium tabular-nums">
       <span>{icon}</span> {text}
     </span>
   );

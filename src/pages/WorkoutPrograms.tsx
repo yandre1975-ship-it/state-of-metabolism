@@ -17,9 +17,9 @@ export default function WorkoutPrograms() {
   const filtered = WORKOUT_PROGRAMS.filter(w => w.level === selectedLevel);
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300">
+    <div className="space-y-5 animate-fade-up">
       <div>
-        <h2 className="text-lg font-bold mb-1">Программы тренировок</h2>
+        <h2 className="text-lg font-bold mb-1 gradient-text">Программы тренировок</h2>
         <p className="text-xs text-muted-foreground">Выберите уровень и тренировку</p>
       </div>
 
@@ -32,8 +32,8 @@ export default function WorkoutPrograms() {
             <button
               key={lvl}
               onClick={() => setSelectedLevel(lvl)}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all active:scale-95
-                ${isActive ? 'bg-foreground text-background' : 'bg-secondary text-muted-foreground'}`}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all duration-300 active:scale-95
+                ${isActive ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}
             >
               <span className="mr-1">{meta.emoji}</span> {meta.label}
             </button>
@@ -49,7 +49,7 @@ export default function WorkoutPrograms() {
             <button
               key={w.id}
               onClick={() => setActiveWorkout(w)}
-              className="w-full text-left rounded-2xl bg-card border p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+              className="w-full text-left rounded-2xl glass-card p-4 hover:border-[hsl(250_90%_60%/0.3)] transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
@@ -122,13 +122,13 @@ function WorkoutDetail({ workout, onBack }: { workout: WorkoutProgram; onBack: (
     .reduce((s, e) => s + e.caloriesBurned, 0);
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-4 animate-fade-up">
       {/* Header */}
       <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-95">
         <ArrowLeft size={16} /> Назад
       </button>
 
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-3 mb-3">
           <span className="text-3xl">{catMeta?.emoji || workout.emoji}</span>
           <div>
@@ -146,7 +146,7 @@ function WorkoutDetail({ workout, onBack }: { workout: WorkoutProgram; onBack: (
       </div>
 
       {/* Progress */}
-      <div className="rounded-xl bg-secondary p-3 flex items-center justify-between">
+      <div className="rounded-xl glass-card p-3 flex items-center justify-between">
         <span className="text-xs font-medium">Прогресс: {doneCount}/{workout.exercises.length}</span>
         <span className="text-xs text-muted-foreground tabular-nums">🔥 {totalBurned} ккал</span>
       </div>
@@ -159,12 +159,12 @@ function WorkoutDetail({ workout, onBack }: { workout: WorkoutProgram; onBack: (
             <li key={i}>
               <button
                 onClick={() => toggleExercise(i)}
-                className={`w-full text-left p-3.5 rounded-xl transition-all duration-150 active:scale-[0.98]
-                  ${isDone ? 'bg-status-green-bg' : 'bg-card border'}`}
+                className={`w-full text-left p-3.5 rounded-2xl transition-all duration-300 active:scale-[0.98]
+                  ${isDone ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors
-                    ${isDone ? 'bg-status-green text-white' : 'border-2 border-muted-foreground/25'}`}>
+                    ${isDone ? 'bg-white/20' : 'border-2 border-muted-foreground/25'}`}>
                     {isDone && <Check size={12} strokeWidth={3} />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -195,7 +195,7 @@ function WorkoutDetail({ workout, onBack }: { workout: WorkoutProgram; onBack: (
       {/* Add to today button */}
       <button
         onClick={addToToday}
-        className="w-full py-3 rounded-xl bg-foreground text-background text-sm font-semibold transition-all active:scale-95 flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-2xl gradient-accent text-white text-sm font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-[hsl(250_90%_60%/0.25)]"
       >
         <Plus size={16} /> Добавить в дневник
       </button>

@@ -96,7 +96,7 @@ export default function FoodDiary() {
   const qualityLabels = ['', '😫 Ужасно', '😕 Плохо', '😐 Нормально', '😊 Хорошо', '😴 Отлично'];
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500">
+    <div className="space-y-5 animate-fade-up">
 
       {/* Quick Trackers */}
       <div className="grid grid-cols-2 gap-3">
@@ -126,8 +126,8 @@ export default function FoodDiary() {
       {/* Protein */}
       <TrackerCard icon={<Drumstick size={16} />} label="Белок в рационе">
         <button onClick={() => update({ protein: !entry.protein })}
-          className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-            ${entry.protein ? 'bg-status-green text-white shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+          className={`w-full py-3 rounded-2xl text-sm font-semibold transition-all duration-300 active:scale-95
+            ${entry.protein ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}>
           {entry.protein ? '✓ Да' : 'Нет'}
         </button>
       </TrackerCard>
@@ -137,8 +137,8 @@ export default function FoodDiary() {
         <div className="flex gap-2">
           {[0, 1, 2, 3, 4, 5].map(n => (
             <button key={n} onClick={() => update({ coffee: n })}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95
-                ${entry.coffee === n ? 'bg-foreground text-background shadow-md' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 active:scale-95
+                ${entry.coffee === n ? 'gradient-accent text-white shadow-md shadow-[hsl(250_90%_60%/0.2)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}>
               {n}
             </button>
           ))}
@@ -178,8 +178,8 @@ export default function FoodDiary() {
             <div className="flex-1 flex gap-1">
               {[6, 7, 8, 9].map(h => (
                 <button key={h} onClick={() => update({ sleepHours: h })}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95
-                    ${sleepHours === h ? 'bg-foreground text-background shadow-sm' : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'}`}>
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 active:scale-95
+                    ${sleepHours === h ? 'gradient-accent text-white shadow-sm shadow-[hsl(250_90%_60%/0.2)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}>
                   {h}ч
                 </button>
               ))}
@@ -199,7 +199,7 @@ export default function FoodDiary() {
       </TrackerCard>
 
       {/* Macro Summary */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="mb-4">
           <h3 className="font-semibold">Дневная норма</h3>
         </div>
@@ -252,7 +252,7 @@ export default function FoodDiary() {
         return (
           <div key={meal} className="space-y-3">
             {/* Meal card */}
-            <div className="rounded-2xl bg-card border p-5 shadow-sm">
+            <div className="rounded-2xl glass-card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="font-semibold">{label}</h3>
@@ -567,7 +567,7 @@ function AddFoodForm({ form, setForm, basePer100, setBasePer100, suggestions, se
       </div>
       <div className="flex gap-2">
         <button onClick={onAdd} disabled={!form.name}
-          className="flex-1 py-2.5 rounded-xl bg-foreground text-background text-sm font-medium transition-all active:scale-95 disabled:opacity-40">
+          className="flex-1 py-2.5 rounded-2xl gradient-accent text-white text-sm font-semibold transition-all active:scale-95 disabled:opacity-40 shadow-lg shadow-[hsl(250_90%_60%/0.25)]">
           Добавить
         </button>
         <button onClick={onCancel}
@@ -617,10 +617,12 @@ function MacroRing({ label, current, target, unit, color }: {
 
 function TrackerCard({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-card border p-4 shadow-sm">
+    <div className="rounded-2xl glass-card p-4">
       <div className="flex items-center gap-2 text-muted-foreground mb-3">
-        {icon}
-        <span className="text-[10px] font-medium uppercase tracking-wide">{label}</span>
+        <div className="w-7 h-7 rounded-lg gradient-accent-soft flex items-center justify-center text-[hsl(250_90%_60%)]">
+          {icon}
+        </div>
+        <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
       {children}
     </div>

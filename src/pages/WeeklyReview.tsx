@@ -38,11 +38,11 @@ export default function WeeklyReview() {
   const insight = generateInsight(last7, weightDelta, avgHunger, avgEnergy, avgSleep, avgQuality, profile);
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500">
-      <h2 className="text-xl font-bold">📊 Обзор недели</h2>
+    <div className="space-y-5 animate-fade-up">
+      <h2 className="text-xl font-bold gradient-text">📊 Обзор недели</h2>
 
       {/* Adherence */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Award size={18} className="text-status-green" />
@@ -86,7 +86,7 @@ export default function WeeklyReview() {
       </div>
 
       {/* Protein adherence */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">🥩 Белок в рационе</span>
           <span className="text-sm font-semibold tabular-nums">{proteinDays}/7 дней</span>
@@ -102,7 +102,7 @@ export default function WeeklyReview() {
       </div>
 
       {/* Sleep chart */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Moon size={16} className="text-muted-foreground" />
@@ -145,7 +145,7 @@ export default function WeeklyReview() {
       </div>
 
       {/* AI Insight */}
-      <div className="rounded-2xl bg-card border p-5 shadow-sm">
+      <div className="rounded-2xl glass-card p-5">
         <div className="flex items-center gap-2 mb-3">
           <BarChart3 size={16} className="text-muted-foreground" />
           <span className="font-semibold text-sm">💡 Анализ</span>
@@ -155,7 +155,7 @@ export default function WeeklyReview() {
 
       {/* Adaptation Warnings */}
       {warnings.length > 0 && (
-        <div className="rounded-2xl border-2 border-status-yellow/30 bg-status-yellow-bg p-5">
+        <div className="rounded-2xl glass-card border-[hsl(40_90%_50%/0.3)] bg-status-yellow-bg/50 p-5">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={16} className="text-status-yellow" />
             <span className="font-semibold text-sm">Адаптация плана</span>
@@ -171,7 +171,7 @@ export default function WeeklyReview() {
       )}
 
       {/* Safety */}
-      <div className="rounded-2xl bg-secondary/50 p-4">
+      <div className="rounded-2xl glass-card p-4">
         <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
           ⚠️ AI Health Operator не заменяет медицинские консультации. При наличии симптомов обратитесь к врачу.
         </p>
@@ -185,7 +185,7 @@ function StatCard({ label, value, delta, deltaUnit, positive, warning }: {
   positive?: boolean; warning?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl bg-card border p-4 shadow-sm ${warning ? 'border-status-yellow/40' : ''}`}>
+    <div className={`rounded-2xl glass-card p-4 ${warning ? 'border-[hsl(40_90%_50%/0.3)]' : ''}`}>
       <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</span>
       <p className="text-xl font-bold tabular-nums mt-1">{value}</p>
       {delta !== null && (
