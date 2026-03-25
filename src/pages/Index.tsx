@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2, BookOpen } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2, BookOpen, Sparkles } from 'lucide-react';
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +45,9 @@ export default function Index() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 size={32} className="animate-spin text-muted-foreground" />
+        <div className="w-16 h-16 rounded-3xl gradient-accent flex items-center justify-center animate-scale-up shadow-xl shadow-[hsl(250_90%_60%/0.3)]">
+          <Sparkles size={28} className="text-white" />
+        </div>
       </div>
     );
   }
@@ -81,11 +83,16 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b px-4 py-3 flex items-center justify-between">
-        <h1 className="text-base font-bold tracking-tight">AI Health Operator</h1>
+      <header className="sticky top-0 z-10 bg-background/60 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl gradient-accent flex items-center justify-center shadow-md shadow-[hsl(250_90%_60%/0.2)]">
+            <Sparkles size={16} className="text-white" />
+          </div>
+          <h1 className="text-sm font-bold tracking-tight gradient-text">AI Health Operator</h1>
+        </div>
         <button onClick={() => setShowUpgrade(true)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium active:scale-95 transition-all
-            ${pro ? 'bg-foreground text-background' : 'bg-status-yellow/15 text-status-yellow'}`}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all
+            ${pro ? 'gradient-accent text-white shadow-md shadow-[hsl(250_90%_60%/0.2)]' : 'glass-card text-[hsl(250_90%_60%)] hover:border-[hsl(250_90%_60%/0.3)]'}`}>
           <Crown size={12} />
           {pro ? 'Pro' : 'Upgrade'}
         </button>
@@ -95,19 +102,23 @@ export default function Index() {
         {renderTab()}
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-lg border-t z-10">
+      <nav className="fixed bottom-0 inset-x-0 bg-background/60 backdrop-blur-xl border-t border-border/50 z-10">
         <div className="max-w-lg mx-auto flex overflow-x-auto scrollbar-none">
           {tabs.map(t => {
             const isLocked = 'proFeature' in t && t.proFeature && !canAccess(t.proFeature);
+            const isActive = tab === t.id;
             return (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors active:scale-95 relative
-                  ${tab === t.id ? 'text-foreground' : 'text-muted-foreground'}`}>
-                <t.icon size={18} strokeWidth={tab === t.id ? 2.5 : 1.5} />
-                <span className="text-[10px] font-medium">{t.label}</span>
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-all active:scale-95 relative
+                  ${isActive ? 'text-[hsl(250_90%_60%)]' : 'text-muted-foreground'}`}>
+                <t.icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
+                <span className={`text-[10px] font-medium ${isActive ? 'font-semibold' : ''}`}>{t.label}</span>
+                {isActive && (
+                  <div className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full gradient-accent" />
+                )}
                 {isLocked && (
                   <div className="absolute top-1.5 right-1/2 translate-x-4">
-                    <Crown size={8} className="text-status-yellow" />
+                    <Crown size={8} className="text-[hsl(250_90%_60%)]" />
                   </div>
                 )}
               </button>
