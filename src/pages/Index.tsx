@@ -54,15 +54,6 @@ export default function Index() {
     return <Auth />;
   }
 
-  if (onboarded === null || migrating) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <Loader2 size={32} className="animate-spin text-muted-foreground" />
-        {migrating && <p className="text-sm text-muted-foreground">Переносим ваши данные...</p>}
-      </div>
-    );
-  }
-
   if (!onboarded) {
     return <Onboarding onComplete={() => setOnboarded(true)} />;
   }
