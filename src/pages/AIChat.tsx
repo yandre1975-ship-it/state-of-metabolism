@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed, Settings2, Square } from 'lucide-react';
-import { getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, type FoodItem } from '@/lib/storage';
+import { getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, calcMacroTargets, type FoodItem } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
 type AgentRole = 'coach' | 'nutrition' | 'training' | 'risk' | 'reminder';
