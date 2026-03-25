@@ -3,7 +3,6 @@ import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, Messag
 import { getProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
 import { useAuth } from '@/contexts/AuthContext';
-import { migrateLocalToCloud, getCloudProfile } from '@/lib/cloudStorage';
 import Dashboard from './Dashboard';
 import Charts from './Charts';
 import FoodDiary from './FoodDiary';
@@ -27,30 +26,21 @@ const tabs = [
 
 type Tab = typeof tabs[number]['id'];
 
+function checkOnboarded(): boolean {
+  try {
+    const p = getProfile();
+    return p.name.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export default function Index() {
   const { user, loading } = useAuth();
   const [tab, setTab] = useState<Tab>('dashboard');
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
-  const [migrating, setMigrating] = useState(false);
+  const [onboarded, setOnboarded] = useState(() => checkOnboarded());
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Force Dashboard refresh when switching to it
-  useEffect(() => {
-    if (tab === 'dashboard') setRefreshKey(k => k + 1);
-  }, [tab]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    // Skip cloud check — use localStorage only (auth is disabled)
-    const localProfile = getProfile();
-    if (localProfile.name.trim().length > 0) {
-      setOnboarded(true);
-    } else {
-      setOnboarded(false);
-    }
-  }, [user]);
 
   if (loading) {
     return (
@@ -62,15 +52,6 @@ export default function Index() {
 
   if (!user) {
     return <Auth />;
-  }
-
-  if (onboarded === null || migrating) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <Loader2 size={32} className="animate-spin text-muted-foreground" />
-        {migrating && <p className="text-sm text-muted-foreground">Переносим ваши данные...</p>}
-      </div>
-    );
   }
 
   if (!onboarded) {
