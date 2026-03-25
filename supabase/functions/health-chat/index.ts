@@ -224,12 +224,15 @@ serve(async (req) => {
 - Вода: ${context.waterLiters || "не указано"} л (${context.waterGlasses || 0} стаканов)
 
 ДНЕВНИК ПИТАНИЯ СЕГОДНЯ:
-- Съедено калорий: ${context.foodCalories || 0} ккал
-- Белки: ${context.foodProtein || 0} г, Углеводы: ${context.foodCarbs || 0} г, Жиры: ${context.foodFat || 0} г
+- Съедено калорий: ${context.foodCalories || 0} / ${context.targetCalories || "?"} ккал
+- Белки: ${context.foodProtein || 0} / ${context.targetProtein || "?"} г
+- Углеводы: ${context.foodCarbs || 0} / ${context.targetCarbs || "?"} г
+- Жиры: ${context.foodFat || 0} / ${context.targetFat || "?"} г
+- ОСТАЛОСЬ: ${context.remainingCalories ?? "?"} ккал, Б${context.remainingProtein ?? "?"}г, У${context.remainingCarbs ?? "?"}г, Ж${context.remainingFat ?? "?"}г
 - Количество записей: ${context.mealsCount || 0}
 - Что ел: ${context.mealsEaten || "ничего не записано"}
 
-Используй эти данные из дневника чтобы давать КОНКРЕТНЫЕ советы. Например если мало белка — скажи сколько ещё нужно. Если калорий слишком мало/много — предупреди.`;
+ВАЖНО: Всегда упоминай сколько ОСТАЛОСЬ калорий и белка до нормы когда даёшь советы по питанию. Используй формат "Осталось: X ккал, БYг". Если остаток отрицательный — предупреди о переборе.`;
       if (context.conditions?.length) {
         systemContent += `\n- Состояние здоровья: ${context.conditions.join(", ")}`;
       }
