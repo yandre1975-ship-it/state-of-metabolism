@@ -95,13 +95,6 @@ export default function Index() {
 
   const pro = isPro();
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Force Dashboard refresh when switching to it
-  useEffect(() => {
-    if (tab === 'dashboard') setRefreshKey(k => k + 1);
-  }, [tab]);
-
   const renderTab = () => {
     switch (tab) {
       case 'dashboard': return <Dashboard key={refreshKey} />;
