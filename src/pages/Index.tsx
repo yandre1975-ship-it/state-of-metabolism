@@ -19,7 +19,7 @@ const tabs = [
   { id: 'profile', label: 'Профиль', icon: User },
   { id: 'dashboard', label: 'Сегодня', icon: LayoutDashboard },
   { id: 'food', label: 'Дневник', icon: BookOpen },
-  { id: 'workouts', label: 'Тренировки', icon: Dumbbell },
+  { id: 'workouts', label: 'Трен.', icon: Dumbbell },
   { id: 'chat', label: 'AI Коуч', icon: MessageCircle },
   { id: 'weekly', label: 'Неделя', icon: CalendarDays, proFeature: 'weeklyReview' as const },
   { id: 'charts', label: 'Графики', icon: BarChart3 },
@@ -122,7 +122,7 @@ export default function Index() {
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-lg border-t z-10">
-        <div className="max-w-lg mx-auto flex">
+        <div className="max-w-lg mx-auto flex overflow-x-auto scrollbar-none">
           {tabs.map(t => {
             const isLocked = 'proFeature' in t && t.proFeature && !canAccess(t.proFeature);
             return (
