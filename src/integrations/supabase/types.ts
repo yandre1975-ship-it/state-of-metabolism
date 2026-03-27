@@ -114,6 +114,7 @@ export type Database = {
           sex: string
           target_date: string | null
           target_weight: number | null
+          telegram_chat_id: string | null
           updated_at: string
           weight: number
         }
@@ -129,6 +130,7 @@ export type Database = {
           sex?: string
           target_date?: string | null
           target_weight?: number | null
+          telegram_chat_id?: string | null
           updated_at?: string
           weight?: number
         }
@@ -144,6 +146,7 @@ export type Database = {
           sex?: string
           target_date?: string | null
           target_weight?: number | null
+          telegram_chat_id?: string | null
           updated_at?: string
           weight?: number
         }
