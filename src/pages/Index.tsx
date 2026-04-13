@@ -30,13 +30,10 @@ function checkOnboarded(): boolean {
   try {
     const p = getProfile();
     if (p.name.trim().length > 0) return true;
-    // Dev stub: auto-create a default profile so we skip onboarding
-    const { saveProfile } = require('@/lib/storage');
-    saveProfile({ name: 'Dev User', sex: 'male', age: 30, height: 175, weight: 75, goal: 'lose', activityLevel: 'moderate', conditions: [] });
-    return true;
-  } catch {
-    return true;
-  }
+  } catch {}
+  // Dev stub: auto-create a default profile so we skip onboarding
+  saveProfile({ name: 'Dev User', sex: 'male', age: 30, height: 175, weight: 75, goal: 'lose', activityLevel: 'moderate', conditions: [] });
+  return true;
 }
 
 export default function Index() {
