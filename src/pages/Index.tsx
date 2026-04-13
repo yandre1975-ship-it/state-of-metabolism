@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, BarChart3, Dumbbell, User, CalendarDays, Crown, MessageCircle, Loader2, BookOpen, Sparkles } from 'lucide-react';
-import { getProfile } from '@/lib/storage';
+import { getProfile, saveProfile } from '@/lib/storage';
 import { canAccess, isPro } from '@/lib/premium';
 import { useAuth } from '@/contexts/AuthContext';
 import Dashboard from './Dashboard';
@@ -29,10 +29,11 @@ type Tab = typeof tabs[number]['id'];
 function checkOnboarded(): boolean {
   try {
     const p = getProfile();
-    return p.name.trim().length > 0;
-  } catch {
-    return false;
-  }
+    if (p.name.trim().length > 0) return true;
+  } catch {}
+  // Dev stub: auto-create a default profile so we skip onboarding
+  saveProfile({ name: 'Dev User', sex: 'male', age: 30, height: 175, weight: 75, goal: 'lose', activityLevel: 'moderate', conditions: [] });
+  return true;
 }
 
 export default function Index() {
