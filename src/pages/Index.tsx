@@ -29,9 +29,13 @@ type Tab = typeof tabs[number]['id'];
 function checkOnboarded(): boolean {
   try {
     const p = getProfile();
-    return p.name.trim().length > 0;
+    if (p.name.trim().length > 0) return true;
+    // Dev stub: auto-create a default profile so we skip onboarding
+    const { saveProfile } = require('@/lib/storage');
+    saveProfile({ name: 'Dev User', sex: 'male', age: 30, height: 175, weight: 75, goal: 'lose', activityLevel: 'moderate', conditions: [] });
+    return true;
   } catch {
-    return false;
+    return true;
   }
 }
 
