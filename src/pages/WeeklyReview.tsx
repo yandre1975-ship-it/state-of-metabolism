@@ -1,4 +1,4 @@
-import { getEntries, getChecklist, getProfile, getTodayExercises, type DailyEntry } from '@/lib/storage';
+import { emptyEntry, getEntries, getChecklist, getProfile, getTodayExercises, type DailyEntry } from '@/lib/storage';
 import { getAdaptationWarnings } from '@/lib/dailyPlan';
 import { TrendingDown, TrendingUp, Minus, AlertTriangle, Award, BarChart3, Moon } from 'lucide-react';
 
@@ -9,28 +9,28 @@ export default function WeeklyReview() {
   const prev7 = getLastNDays(entries, 14).slice(0, 7);
   const warnings = getAdaptationWarnings(profile);
 
-  const daysTracked = last7.filter(e => e.weight || e.activity > 0).length;
+  const daysTracked = last7.filter(e => ['weight', 'activity', 'hunger', 'energy', 'water', 'sleepHours', 'protein', 'coffee'].some(k => e[k as keyof DailyEntry] != null)).length;
   const adherence = Math.round((daysTracked / 7) * 100);
 
   // Weight
-  const weights = last7.filter(e => e.weight).map(e => e.weight!);
-  const prevWeights = prev7.filter(e => e.weight).map(e => e.weight!);
+  const weights = last7.filter(e => e.weight != null).map(e => e.weight!);
+  const prevWeights = prev7.filter(e => e.weight != null).map(e => e.weight!);
   const currentAvg = weights.length > 0 ? avg(weights) : null;
   const prevAvg = prevWeights.length > 0 ? avg(prevWeights) : null;
-  const weightDelta = currentAvg && prevAvg ? round(currentAvg - prevAvg, 1) : null;
+  const weightDelta = currentAvg != null && prevAvg != null ? round(currentAvg - prevAvg, 1) : null;
 
   // Averages
-  const avgHunger = round(avg(last7.map(e => e.hunger).filter(Boolean)), 1);
-  const avgEnergy = round(avg(last7.map(e => e.energy).filter(Boolean)), 1);
-  const avgActivity = Math.round(avg(last7.map(e => e.activity)));
+  const avgHunger = round(avg(last7.map(e => e.hunger).filter((v): v is number => v != null)), 1);
+  const avgEnergy = round(avg(last7.map(e => e.energy).filter((v): v is number => v != null)), 1);
+  const avgActivity = Math.round(avg(last7.map(e => e.activity).filter((v): v is number => v != null)));
   const proteinDays = last7.filter(e => e.protein).length;
 
   // Sleep
-  const sleepData = last7.map(e => e.sleepHours || 0);
-  const sleepWithData = sleepData.filter(h => h > 0);
+  const sleepData = last7.map(e => e.sleepHours);
+  const sleepWithData = sleepData.filter((h): h is number => h != null);
   const avgSleep = sleepWithData.length > 0 ? round(avg(sleepWithData), 1) : null;
-  const qualityData = last7.map(e => e.sleepQuality || 0);
-  const qualityWithData = qualityData.filter(q => q > 0);
+  const qualityData = last7.map(e => e.sleepQuality);
+  const qualityWithData = qualityData.filter((q): q is number => q != null);
   const avgQuality = qualityWithData.length > 0 ? round(avg(qualityWithData), 1) : null;
   const qualityLabels: Record<number, string> = { 1: 'Ужасно', 2: 'Плохо', 3: 'Нормально', 4: 'Хорошо', 5: 'Отлично' };
 
@@ -61,25 +61,25 @@ export default function WeeklyReview() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           label="Вес (средний)"
-          value={currentAvg ? `${round(currentAvg, 1)} кг` : '—'}
+          value={currentAvg != null ? `${round(currentAvg, 1)} кг` : '—'}
           delta={weightDelta}
           deltaUnit="кг"
           positive={weightDelta !== null && weightDelta < 0 && profile.goal === 'lose'}
         />
         <StatCard
           label="Активность (ср.)"
-          value={`${avgActivity} мин`}
+          value={`${Number.isFinite(avgActivity) ? avgActivity : "—"} мин`}
           delta={null}
         />
         <StatCard
           label="Голод (ср.)"
-          value={`${avgHunger}/5`}
+          value={`${Number.isFinite(avgHunger) ? avgHunger : "—"}/5`}
           delta={null}
           warning={avgHunger >= 3.5}
         />
         <StatCard
           label="Энергия (ср.)"
-          value={`${avgEnergy}/5`}
+          value={`${Number.isFinite(avgEnergy) ? avgEnergy : "—"}/5`}
           delta={null}
           warning={avgEnergy <= 2.5}
         />
@@ -93,7 +93,7 @@ export default function WeeklyReview() {
         </div>
         <div className="flex gap-1 mt-3">
           {last7.map((e, i) => (
-            <div key={i} className={`flex-1 h-8 rounded-lg ${e.protein ? 'bg-status-green' : 'bg-secondary'}`} />
+            <div key={i} title={e.protein == null ? "Не записано" : e.protein ? "Да" : "Нет"} className={`flex-1 h-8 rounded-lg ${e.protein == null ? 'bg-secondary' : e.protein ? 'bg-status-green' : 'bg-status-yellow'}`} />
           ))}
         </div>
         <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
@@ -115,13 +115,13 @@ export default function WeeklyReview() {
         {/* Bar chart */}
         <div className="flex items-end gap-1.5 h-28">
           {last7.map((e, i) => {
-            const h = e.sleepHours || 0;
+            const h = e.sleepHours;
             const maxH = 12;
-            const pct = Math.min(100, (h / maxH) * 100);
-            const color = h === 0 ? 'bg-secondary' : h >= 7 ? 'bg-status-green' : h >= 6 ? 'bg-status-yellow' : 'bg-status-red';
+            const pct = Math.min(100, ((h ?? 0) / maxH) * 100);
+            const color = h == null ? 'bg-secondary' : h >= 7 ? 'bg-status-green' : h >= 6 ? 'bg-status-yellow' : 'bg-status-red';
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] tabular-nums text-muted-foreground">{h > 0 ? `${h}` : ''}</span>
+                <span className="text-[10px] tabular-nums text-muted-foreground">{h == null ? '—' : `${h}`} </span>
                 <div className="w-full rounded-t-md transition-all duration-300" style={{ height: `${Math.max(4, pct)}%` }}>
                   <div className={`w-full h-full rounded-t-md ${color}`} />
                 </div>
@@ -140,7 +140,7 @@ export default function WeeklyReview() {
           </div>
         )}
         {avgSleep !== null && avgSleep < 7 && (
-          <p className="text-xs text-muted-foreground mt-3">⚠️ Среднее время сна ниже нормы (7–8 ч). Недосып замедляет метаболизм и усиливает голод.</p>
+          <p className="text-xs text-muted-foreground mt-3">⚠️ Среднее время сна ниже нормы (7–8 ч). Записи сна не позволяют судить о состоянии обмена веществ.</p>
         )}
       </div>
 
@@ -205,13 +205,11 @@ function getLastNDays(entries: DailyEntry[], n: number): DailyEntry[] {
     d.setDate(d.getDate() - i);
     dates.push(d.toISOString().slice(0, 10));
   }
-  return dates.map(date => entries.find(e => e.date === date) || {
-    date, weight: null, hunger: 0, energy: 0, coffee: 0, protein: false, activity: 0, water: 0, sleepHours: 0, sleepQuality: 3,
-  });
+  return dates.map(date => entries.find(e => e.date === date) || emptyEntry(date));
 }
 
 function avg(arr: number[]): number {
-  return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : NaN;
 }
 
 function round(n: number, d: number): number {
@@ -241,7 +239,7 @@ function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHun
   }
 
   if (avgSleep !== null && avgSleep < 7) {
-    parts.push(`Средний сон ${avgSleep} ч — ниже нормы. Недосып повышает кортизол и аппетит.`);
+    parts.push(`Средний сон ${avgSleep} ч — ниже нормы. Можно обратить внимание на режим отдыха.`);
   }
 
   if (avgQuality !== null && avgQuality < 3) {
@@ -249,12 +247,12 @@ function generateInsight(last7: DailyEntry[], weightDelta: number | null, avgHun
   }
 
   const proteinDays = last7.filter(e => e.protein).length;
-  if (proteinDays < 4) {
-    parts.push('Белок присутствует менее чем в половине дней — это влияет на сытость и метаболизм.');
+  if (last7.filter(e => e.protein === false).length >= 4) {
+    parts.push('В нескольких записях отмечено отсутствие белка. Можно пересмотреть состав питания.');
   }
 
   if (parts.length === 0) {
-    parts.push('Все показатели в хорошей зоне. Продолжайте следовать текущему плану для стабильного результата.');
+    parts.push('Для выводов используйте только заполненные записи; дневник не оценивает здоровье или обмен веществ.');
   }
 
   return parts.join(' ');

@@ -60,11 +60,7 @@ const AGENTS: Record<AgentRole, AgentConfig> = {
 
 Этот формат позволяет пользователю одним нажатием добавить рекомендацию в дневник питания.
 
-Знания:
-- Инсулинорезистентность: снижать простые углеводы, увеличить белок и клетчатку
-- Контроль голода: белок + клетчатка + жиры в каждом приёме
-- Кортизол: избегать кофе натощак, не пропускать приёмы пищи
-- Гипотиреоз: йод, селен, достаточно калорий (не голодать)
+При диагностированных заболеваниях рекомендуй согласовывать изменения питания с лечащим врачом.
 
 НЕЛЬЗЯ: назначать БАДы, лекарства, диагностировать болезни.`,
   },
@@ -121,14 +117,7 @@ const AGENTS: Record<AgentRole, AgentConfig> = {
 - Не давать опасных рекомендаций
 - Рекомендовать обращение к врачу при тревожных симптомах
 
-Красные флаги:
-- Голод 5/5 постоянно → риск срыва, возможный дефицит калорий
-- Энергия 1/5 более 3 дней → возможное заболевание
-- Вес падает > 1кг/неделю → слишком агрессивный дефицит
-- Сон < 5 часов регулярно → риск гормональных нарушений
-- Кофе > 3 чашек + низкая энергия → зависимость от стимуляторов
-
-Всегда начинай с главного риска. Предложи 1-2 конкретных действия для снижения риска.
+Оценки дневника — субъективные наблюдения, а не диагностика. Уточняй симптомы и длительность жалоб. Не выводи заболевания, гормональные нарушения, зависимость, стресс или состояние обмена веществ из шкал и записей.
 Если симптомы серьёзные — НАСТОЯТЕЛЬНО рекомендуй врача.`,
   },
 
@@ -167,8 +156,8 @@ function routeToAgent(message: string, context: any): AgentRole {
 
   // Check context for risk signals
   if (context) {
-    if (context.hunger >= 5 || context.energy <= 1) return "risk";
-    if (context.sleepHours && context.sleepHours < 5 && context.energy <= 2) return "risk";
+    if (context.hunger >= 5 || (context.energy != null && context.energy <= 1)) return "risk";
+    if (context.sleepHours && context.sleepHours < 5 && (context.energy != null && context.energy <= 2)) return "risk";
   }
 
   // Nutrition keywords
@@ -203,7 +192,8 @@ serve(async (req) => {
     const agent = AGENTS[agentRole];
 
     // Build context-aware system prompt
-    let systemContent = agent.prompt;
+    let systemContent = agent.prompt + `
+ОБЯЗАТЕЛЬНО: null/отсутствие значения означает «не записано», не ноль. Ноль и false — явные значения. legacyDailyValues означает, что старые значения могли быть значениями по умолчанию. Опираться на assessment: единые наблюдения и советы приложения; не давать противоположных рекомендаций. Не диагностировать стресс, гормоны, зависимость или жиросжигание по дневнику. Дневник питания не подтверждён как полный: суммы — только записанные продукты. Отсутствие записей не означает голодание. Не требовать компенсации калорий нагрузкой.`;
 
     if (context) {
       systemContent += `\n\nТекущие данные пользователя:
@@ -211,28 +201,30 @@ serve(async (req) => {
 - Пол: ${context.sex === "female" ? "женский" : "мужской"}
 - Возраст: ${context.age || "не указан"} лет
 - Рост: ${context.height || "не указан"} см
-- Вес: ${context.weight || "не указан"} кг
+- Вес: ${context.weight ?? "не указан"} кг
 - Целевой вес: ${context.targetWeight || "не указан"} кг
 - Уровень активности: ${context.activityLevel || "не указан"}
-- Голод: ${context.hunger}/5
-- Энергия: ${context.energy}/5
-- Кофе: ${context.coffee} чашек
-- Белок: ${context.protein ? "да" : "нет"}
-- Активность сегодня: ${context.activity} мин
+- Голод: ${context.hunger ?? "не записано"}/5
+- Энергия: ${context.energy ?? "не записано"}/5
+- Кофе: ${context.coffee ?? "не записано"} чашек
+- Белок: ${context.protein == null ? "не записано" : context.protein ? "да" : "нет"}
+- Активность сегодня: ${context.activity ?? "не записано"} мин
 - Цель: ${context.goal || "не указана"}
-- Сон: ${context.sleepHours || "не указан"} ч (качество: ${context.sleepQuality || "не указано"}/5)
-- Вода: ${context.waterLiters || "не указано"} л (${context.waterGlasses || 0} стаканов)
+- Сон: ${context.sleepHours ?? "не указан"} ч (качество: ${context.sleepQuality ?? "не указано"}/5)
+- Вода: ${context.waterLiters ?? "не указано"} л (${context.waterGlasses ?? "не записано"} стаканов)
 
 ДНЕВНИК ПИТАНИЯ СЕГОДНЯ:
-- Съедено калорий: ${context.foodCalories || 0} / ${context.targetCalories || "?"} ккал
-- Белки: ${context.foodProtein || 0} / ${context.targetProtein || "?"} г
-- Углеводы: ${context.foodCarbs || 0} / ${context.targetCarbs || "?"} г
-- Жиры: ${context.foodFat || 0} / ${context.targetFat || "?"} г
+- Съедено калорий: ${context.foodCalories ?? "не записано"} / ${context.targetCalories || "?"} ккал
+- Белки: ${context.foodProtein ?? "не записано"} / ${context.targetProtein || "?"} г
+- Углеводы: ${context.foodCarbs ?? "не записано"} / ${context.targetCarbs || "?"} г
+- Жиры: ${context.foodFat ?? "не записано"} / ${context.targetFat || "?"} г
 - ОСТАЛОСЬ: ${context.remainingCalories ?? "?"} ккал, Б${context.remainingProtein ?? "?"}г, У${context.remainingCarbs ?? "?"}г, Ж${context.remainingFat ?? "?"}г
 - Количество записей: ${context.mealsCount || 0}
 - Что ел: ${context.mealsEaten || "ничего не записано"}
 
-ВАЖНО: Всегда упоминай сколько ОСТАЛОСЬ калорий и белка до нормы когда даёшь советы по питанию. Используй формат "Осталось: X ккал, БYг". Если остаток отрицательный — предупреди о переборе.`;
+Суммы и остатки относятся только к записанным продуктам и приблизительному ориентиру, не к медицинской норме. Сначала уточни полноту дневника.
+Наблюдения приложения: ${JSON.stringify(context.assessment ?? null)}
+Старые значения: ${context.legacyDailyValues ?? false}`;
       if (context.conditions?.length) {
         systemContent += `\n- Состояние здоровья: ${context.conditions.join(", ")}`;
       }

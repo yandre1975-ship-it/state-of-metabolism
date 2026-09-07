@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Trash2, Lightbulb, ChevronDown, ChevronUp, Scale, Activity, Flame, Zap, Drumstick, Coffee, Droplets, Moon } from 'lucide-react';
-import { getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
+import { assessDay, getTodayFood, saveDailyFood, getTodayEntry, saveEntry, calcMacroTargets, getProfile, getTodayExercises, calcBurnedCalories, calcDailyDeficit, type FoodItem, type DailyEntry } from '@/lib/storage';
 import { searchFoods, type FoodDBItem } from '@/lib/foodDatabase';
 import { generateRecommendations } from '@/lib/recommendations';
 import ExerciseTracker from '@/components/ExerciseTracker';
@@ -30,6 +30,7 @@ export default function FoodDiary() {
   const [expandedRecs, setExpandedRecs] = useState<Record<string, boolean>>({});
   const suggestRef = useRef<HTMLDivElement>(null);
 
+  const assessment = assessDay(entry);
   const profile = getProfile();
   const targets = calcMacroTargets(entry.weight, entry.activity, profile);
   const recs = generateRecommendations(profile, entry.activity);
@@ -91,13 +92,17 @@ export default function FoodDiary() {
   const waterLiters = (glasses * 250 / 1000);
   const waterPct = Math.min(100, Math.round((glasses / waterNormGlasses) * 100));
 
-  const sleepHours = entry.sleepHours || 0;
-  const sleepQuality = entry.sleepQuality || 3;
+  const sleepHours = entry.sleepHours;
+  const sleepQuality = entry.sleepQuality;
   const qualityLabels = ['', '😫 Ужасно', '😕 Плохо', '😐 Нормально', '😊 Хорошо', '😴 Отлично'];
 
   return (
     <div className="space-y-5 animate-fade-up">
 
+      <p className="text-xs text-muted-foreground">«Не записано» и «—» означают отсутствие данных, а не ноль. Оценки 1–5 — ваши субъективные наблюдения.</p>
+      {entry.legacy && <div className="p-3 rounded-xl bg-secondary text-sm">Старая запись: значения сохранены, но могли быть значениями по умолчанию. Проверьте все поля.
+        <button className="block underline" onClick={() => update({ legacy: false })}>Подтверждаю значения этой записи</button>
+      </div>}
       {/* Quick Trackers */}
       <div className="grid grid-cols-2 gap-3">
         <TrackerCard icon={<Scale size={16} />} label="Вес (кг)">
@@ -105,35 +110,37 @@ export default function FoodDiary() {
             placeholder="—" className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40" />
         </TrackerCard>
         <TrackerCard icon={<Activity size={16} />} label="Активность (мин)">
-          <input type="number" value={entry.activity || ''} onChange={e => update({ activity: Math.max(0, Number(e.target.value)) })}
-            placeholder="0" className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40" />
+          <input aria-label="Активность (мин)" type="number" min="0" value={entry.activity ?? ''} onChange={e => update({ activity: e.target.value === '' ? null : Math.max(0, Number(e.target.value)) })}
+            placeholder="—" className="w-full bg-transparent text-2xl font-semibold outline-none tabular-nums placeholder:text-muted-foreground/40" />
         </TrackerCard>
       </div>
 
       {/* Hunger & Energy */}
-      <TrackerCard icon={<Flame size={16} />} label={`Голод: ${entry.hunger}/5`}>
-        <input type="range" min={1} max={5} value={entry.hunger} onChange={e => update({ hunger: Number(e.target.value) })}
-          className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+      <TrackerCard icon={<Flame size={16} />} label={`Голод: ${entry.hunger ?? "—"}/5`}>
+        <select aria-label="Голод" value={entry.hunger ?? ''} onChange={e => update({ hunger: e.target.value === '' ? null : Number(e.target.value) })} className="w-full bg-secondary rounded-lg p-2">
+          <option value="">Не записано</option>
+          {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}/5</option>)}
+        </select>
         <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Нет</span><span>Сильный</span></div>
       </TrackerCard>
 
-      <TrackerCard icon={<Zap size={16} />} label={`Энергия: ${entry.energy}/5`}>
-        <input type="range" min={1} max={5} value={entry.energy} onChange={e => update({ energy: Number(e.target.value) })}
-          className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+      <TrackerCard icon={<Zap size={16} />} label={`Энергия: ${entry.energy ?? "—"}/5`}>
+        <select aria-label="Энергия" value={entry.energy ?? ''} onChange={e => update({ energy: e.target.value === '' ? null : Number(e.target.value) })} className="w-full bg-secondary rounded-lg p-2">
+          <option value="">Не записано</option>
+          {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}/5</option>)}
+        </select>
         <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>Низкая</span><span>Высокая</span></div>
       </TrackerCard>
 
       {/* Protein */}
       <TrackerCard icon={<Drumstick size={16} />} label="Белок в рационе">
-        <button onClick={() => update({ protein: !entry.protein })}
-          className={`w-full py-3 rounded-2xl text-sm font-semibold transition-all duration-300 active:scale-95
-            ${entry.protein ? 'gradient-accent text-white shadow-lg shadow-[hsl(250_90%_60%/0.25)]' : 'glass-card hover:border-[hsl(250_90%_60%/0.3)]'}`}>
-          {entry.protein ? '✓ Да' : 'Нет'}
-        </button>
+        <select aria-label="Белок в рационе" value={entry.protein == null ? '' : String(entry.protein)} onChange={e => update({ protein: e.target.value === '' ? null : e.target.value === 'true' })} className="w-full bg-secondary rounded-lg p-2">
+          <option value="">Не записано</option><option value="true">Да</option><option value="false">Нет</option>
+        </select>
       </TrackerCard>
 
       {/* Coffee */}
-      <TrackerCard icon={<Coffee size={16} />} label={`Кофе: ${entry.coffee} чашек`}>
+      <TrackerCard icon={<Coffee size={16} />} label={`Кофе: ${entry.coffee ?? "—"} чашек`}>
         <div className="flex gap-2">
           {[0, 1, 2, 3, 4, 5].map(n => (
             <button key={n} onClick={() => update({ coffee: n })}
@@ -146,8 +153,9 @@ export default function FoodDiary() {
         {entry.coffee > 2 && <p className="text-[10px] text-status-yellow mt-2">⚠️ Более 2 чашек может влиять на сон и аппетит</p>}
       </TrackerCard>
 
+      <button className="text-xs underline" onClick={() => update({ coffee: null })}>Очистить кофе</button>
       {/* Water */}
-      <TrackerCard icon={<Droplets size={16} />} label={`Вода: ${waterLiters.toFixed(1)} л / ${waterNormL} л`}>
+      <TrackerCard icon={<Droplets size={16} />} label={`Вода: ${entry.water == null ? "—" : waterLiters.toFixed(1)} л / ${waterNormL} л`}>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <button onClick={() => update({ water: Math.max(0, glasses - 1) })}
@@ -167,13 +175,14 @@ export default function FoodDiary() {
         </div>
       </TrackerCard>
 
+      <button className="text-xs underline" onClick={() => update({ water: null })}>Очистить воду</button>
       {/* Sleep */}
-      <TrackerCard icon={<Moon size={16} />} label={`Сон: ${sleepHours > 0 ? `${sleepHours} ч` : '—'}`}>
+      <TrackerCard icon={<Moon size={16} />} label={`Сон: ${sleepHours != null ? `${sleepHours} ч` : 'Не записано'}`}>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground w-12">Часы:</span>
-            <input type="number" step="0.5" min="0" max="24" value={sleepHours > 0 ? sleepHours : ''} placeholder="0"
-              onChange={e => { const v = parseFloat(e.target.value); update({ sleepHours: !isNaN(v) && v >= 0 ? Math.min(24, v) : 0 }); }}
+            <input type="number" step="0.5" min="0" max="24" aria-label="Сон (часы)" value={sleepHours ?? ''} placeholder="—"
+              onChange={e => { const v = parseFloat(e.target.value); update({ sleepHours: !isNaN(v) && v >= 0 ? Math.min(24, v) : null }); }}
               className="w-16 bg-secondary text-center text-sm font-medium rounded-lg py-1.5 outline-none focus:ring-2 focus:ring-ring tabular-nums" />
             <div className="flex-1 flex gap-1">
               {[6, 7, 8, 9].map(h => (
@@ -188,11 +197,11 @@ export default function FoodDiary() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs text-muted-foreground">Качество:</span>
-              <span className="text-xs font-medium">{qualityLabels[sleepQuality]}</span>
+              <span className="text-xs font-medium">{sleepQuality == null ? "Не записано" : qualityLabels[sleepQuality]}</span>
             </div>
-            <input type="range" min={1} max={5} value={sleepQuality}
-              onChange={e => update({ sleepQuality: Number(e.target.value) })}
-              className="w-full accent-foreground h-2 rounded-full cursor-pointer" />
+            <select aria-label="Качество сна" value={sleepQuality ?? ''} onChange={e => update({ sleepQuality: e.target.value === '' ? null : Number(e.target.value) })} className="w-full bg-secondary rounded-lg p-2">
+              <option value="">Не записано</option>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{qualityLabels[n]}</option>)}
+            </select>
             <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5"><span>Плохо</span><span>Отлично</span></div>
           </div>
         </div>
@@ -204,13 +213,13 @@ export default function FoodDiary() {
           <h3 className="font-semibold">Дневная норма</h3>
         </div>
         <div className="grid grid-cols-4 gap-3">
-          <MacroRing label="Нетто" current={netCalories} target={targets.calories} unit="" color="var(--foreground)" />
-          <MacroRing label="Белки" current={totals.p} target={targets.protein} unit="г" color="hsl(var(--status-green))" />
-          <MacroRing label="Углев." current={totals.c} target={targets.carbs} unit="г" color="hsl(var(--status-yellow))" />
-          <MacroRing label="Жиры" current={totals.f} target={targets.fat} unit="г" color="hsl(var(--status-red))" />
+          <MacroRing label="Нетто" current={food.items.length ? netCalories : null} target={targets.calories} unit="" color="var(--foreground)" />
+          <MacroRing label="Белки" current={food.items.length ? totals.p : null} target={targets.protein} unit="г" color="hsl(var(--status-green))" />
+          <MacroRing label="Углев." current={food.items.length ? totals.c : null} target={targets.carbs} unit="г" color="hsl(var(--status-yellow))" />
+          <MacroRing label="Жиры" current={food.items.length ? totals.f : null} target={targets.fat} unit="г" color="hsl(var(--status-red))" />
         </div>
         <div className="flex items-center justify-center gap-4 mt-3 text-[11px] text-muted-foreground tabular-nums">
-          <span>Съедено: {totals.cal} ккал</span>
+          <span>Записано: {food.items.length ? totals.cal : "—"} ккал</span>
           <span>—</span>
           <span className="text-status-green">Сожжено: {burned} ккал</span>
         </div>
@@ -234,7 +243,7 @@ export default function FoodDiary() {
           <span className="text-xs font-medium">Рекомендация по нагрузке</span>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Сожгите ~{recs.exerciseTotalBurn} ккал упражнениями сегодня для оптимального баланса
+          {assessment.message}. {assessment.actions.join(" ")}
         </p>
       </div>
 
@@ -245,7 +254,7 @@ export default function FoodDiary() {
         const mealRec = recs.meals.find(m => m.meal === meal);
         const snackRec = recs.snacks.find(s => s.afterMeal === meal);
         const snackItems = food.items.filter(i => i.meal === 'snack' && i.id.startsWith(`snack_${meal}`));
-        const exRec = recs.exercises.find(e => e.slot === exercise);
+        const exRec = assessment.status === 'green' || assessment.status === 'yellow' ? recs.exercises.find(e => e.slot === exercise) : undefined;
         const recKey = `rec_${meal}`;
         const isRecExpanded = expandedRecs[recKey];
 
@@ -584,15 +593,15 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
     <div>
       <label className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</label>
       <input type="number" inputMode="numeric" value={value} onChange={e => onChange(e.target.value)}
-        placeholder="0" className="w-full bg-secondary rounded-lg px-2 py-2 text-sm outline-none tabular-nums placeholder:text-muted-foreground/40" />
+        placeholder="—" className="w-full bg-secondary rounded-lg px-2 py-2 text-sm outline-none tabular-nums placeholder:text-muted-foreground/40" />
     </div>
   );
 }
 
 function MacroRing({ label, current, target, unit, color }: {
-  label: string; current: number; target: number; unit: string; color: string;
+  label: string; current: number | null; target: number; unit: string; color: string;
 }) {
-  const pct = Math.min((current / target) * 100, 100);
+  const pct = Math.min(((current ?? 0) / target) * 100, 100);
   const r = 28;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
@@ -606,7 +615,7 @@ function MacroRing({ label, current, target, unit, color }: {
             strokeDasharray={circ} strokeDashoffset={offset} className="transition-all duration-500" />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-semibold tabular-nums">{current}</span>
+          <span className="text-xs font-semibold tabular-nums">{current ?? "—"}</span>
         </div>
       </div>
       <span className="text-[10px] text-muted-foreground">{label}</span>

@@ -54,8 +54,9 @@ function getStreak(): number {
 }
 
 const statusConfig: Record<Status, { gradient: string; text: string; icon: string; label: string }> = {
-  green: { gradient: 'from-[hsl(152_60%_42%)] to-[hsl(170_60%_45%)]', text: 'text-white', icon: '🔥', label: 'Все показатели в норме' },
-  yellow: { gradient: 'from-[hsl(40_90%_50%)] to-[hsl(30_90%_55%)]', text: 'text-white', icon: '⚠️', label: 'Есть что улучшить' },
+  unknown: { gradient: 'from-slate-500 to-slate-600', text: 'text-white', icon: '📝', label: 'Заполните или проверьте дневник' },
+  green: { gradient: 'from-[hsl(152_60%_42%)] to-[hsl(170_60%_45%)]', text: 'text-white', icon: '🔥', label: 'Наблюдения, не медицинская оценка' },
+  yellow: { gradient: 'from-[hsl(40_90%_50%)] to-[hsl(30_90%_55%)]', text: 'text-white', icon: '⚠️', label: 'Наблюдения, не медицинская оценка' },
   red: { gradient: 'from-[hsl(0_72%_51%)] to-[hsl(350_70%_55%)]', text: 'text-white', icon: '🛑', label: 'Требуется внимание' },
 };
 
@@ -76,7 +77,7 @@ export default function Dashboard() {
     { cal: 0, p: 0, c: 0, f: 0 }
   );
   const doneExercises = exercises.items.filter(i => i.done).length;
-  const waterLiters = ((entry.water || 0) * 0.25).toFixed(1);
+  const waterLiters = (entry.water == null ? "—" : (entry.water * 0.25).toFixed(1));
   const waterNormL = ((Math.round((profile.weight || 75) * 30)) / 1000).toFixed(1);
 
   return (
@@ -121,19 +122,19 @@ export default function Dashboard() {
           <h3 className="font-bold text-sm">Прогресс сегодня</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <ProgressChip label="Калории" value={`${foodTotals.cal} / ${targets.calories}`} unit="ккал" pct={Math.min(100, Math.round(foodTotals.cal / targets.calories * 100))} />
-          <ProgressChip label="Белки" value={`${Math.round(foodTotals.p)} / ${targets.protein}`} unit="г" pct={Math.min(100, Math.round(foodTotals.p / targets.protein * 100))} />
-          <ProgressChip label="Вода" value={`${waterLiters} / ${waterNormL}`} unit="л" pct={Math.min(100, Math.round(parseFloat(waterLiters) / parseFloat(waterNormL) * 100))} />
+          <ProgressChip label="Калории" value={`${food.items.length ? foodTotals.cal : "—"} / ${targets.calories}`} unit="ккал" pct={food.items.length === 0 ? null : Math.min(100, Math.round(foodTotals.cal / targets.calories * 100))} />
+          <ProgressChip label="Белки" value={`${food.items.length ? Math.round(foodTotals.p) : "—"} / ${targets.protein}`} unit="г" pct={food.items.length === 0 ? null : Math.min(100, Math.round(foodTotals.p / targets.protein * 100))} />
+          <ProgressChip label="Вода" value={`${waterLiters} / ${waterNormL}`} unit="л" pct={entry.water == null ? null : Math.min(100, Math.round(parseFloat(waterLiters) / parseFloat(waterNormL) * 100))} />
           <ProgressChip label="Сожжено" value={String(burned)} unit="ккал" pct={Math.min(100, Math.round(burned / 300 * 100))} />
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
-          {entry.weight && <ReadChip icon="⚖️" text={`${entry.weight} кг`} />}
-          {(entry.sleepHours || 0) > 0 && <ReadChip icon="😴" text={`${entry.sleepHours} ч сна`} />}
-          {(entry.activity || 0) > 0 && <ReadChip icon="🏃" text={`${entry.activity} мин`} />}
-          {(entry.coffee || 0) > 0 && <ReadChip icon="☕" text={`${entry.coffee} чашек`} />}
-          {entry.protein && <ReadChip icon="🥩" text="Белок ✓" />}
-          <ReadChip icon={entry.hunger >= 4 ? '😫' : '😊'} text={`Голод ${entry.hunger}/5`} />
-          <ReadChip icon={entry.energy >= 4 ? '⚡' : '🔋'} text={`Энергия ${entry.energy}/5`} />
+          {entry.weight != null && <ReadChip icon="⚖️" text={`${entry.weight} кг`} />}
+          {entry.sleepHours != null && <ReadChip icon="😴" text={`${entry.sleepHours} ч сна`} />}
+          {entry.activity != null && <ReadChip icon="🏃" text={`${entry.activity} мин`} />}
+          {entry.coffee != null && <ReadChip icon="☕" text={`${entry.coffee} чашек`} />}
+          <ReadChip icon="🥩" text={`Белок: ${entry.protein == null ? "—" : entry.protein ? "Да" : "Нет"}`} />
+          <ReadChip icon={entry.hunger >= 4 ? '😫' : '😊'} text={`Голод ${entry.hunger ?? "—"}/5`} />
+          <ReadChip icon={entry.energy >= 4 ? '⚡' : '🔋'} text={`Энергия ${entry.energy ?? "—"}/5`} />
           {doneExercises > 0 && <ReadChip icon="💪" text={`${doneExercises} упр.`} />}
         </div>
       </div>
@@ -185,18 +186,18 @@ export default function Dashboard() {
   );
 }
 
-function ProgressChip({ label, value, unit, pct }: { label: string; value: string; unit: string; pct: number }) {
+function ProgressChip({ label, value, unit, pct }: { label: string; value: string; unit: string; pct: number | null }) {
   return (
     <div className="rounded-xl glass-card p-3">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</span>
-        <span className="text-[10px] text-muted-foreground tabular-nums">{pct}%</span>
+        <span className="text-[10px] text-muted-foreground tabular-nums">{pct == null ? "—" : `${pct ?? 0}%`}</span>
       </div>
       <div className="h-1.5 rounded-full bg-border/50 overflow-hidden mb-1.5">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{
-            width: `${pct}%`,
+            width: `${pct ?? 0}%`,
             background: pct >= 80
               ? 'linear-gradient(90deg, hsl(152 60% 42%), hsl(170 60% 45%))'
               : pct >= 40

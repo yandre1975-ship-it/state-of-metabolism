@@ -7,10 +7,10 @@ import NotificationSettings from '@/components/NotificationSettings';
 import AgentInsightBanner from '@/components/AgentInsightBanner';
 
 const conditionsList: { id: HealthCondition; label: string; description: string }[] = [
-  { id: 'insulin_resistance', label: 'Инсулинорезистентность', description: 'Снижает углеводы, увеличивает белок и жиры' },
-  { id: 'hypothyroid', label: 'Гипотиреоз', description: 'Учитывает замедленный метаболизм' },
-  { id: 'pcos', label: 'СПКЯ', description: 'Оптимизирует макросы для гормонального баланса' },
-  { id: 'high_cortisol', label: 'Повышенный кортизол', description: 'Корректирует калории для снижения стресса' },
+  { id: 'insulin_resistance', label: 'Инсулинорезистентность', description: 'Изменения питания согласуйте с врачом' },
+  { id: 'hypothyroid', label: 'Гипотиреоз', description: 'Изменения питания согласуйте с врачом' },
+  { id: 'pcos', label: 'СПКЯ', description: 'Изменения питания согласуйте с врачом' },
+  { id: 'high_cortisol', label: 'Повышенный кортизол', description: 'Изменения питания согласуйте с врачом' },
 ];
 
 export default function Profile() {
@@ -216,7 +216,7 @@ export default function Profile() {
                 </div>
               </div>
               {!safe && <p className="text-xs text-status-red mt-2">⚠️ Дефицит &gt;1000 ккал/день небезопасен.</p>}
-              {safe && <p className="text-xs text-status-green mt-2">✓ Безопасный темп похудения</p>}
+              {safe && <p className="text-xs text-status-green mt-2">Расчётный ориентир, не оценка безопасности</p>}
             </div>
           );
         })()}

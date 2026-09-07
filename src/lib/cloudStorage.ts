@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeEntry } from './storage';
 import type { UserProfile, DailyEntry, DailyFood, DailyExercises } from './storage';
 
 // ── Profile ──
@@ -48,25 +49,20 @@ export async function getCloudEntries(): Promise<DailyEntry[]> {
     .select('*')
     .order('date', { ascending: true });
 
-  return (data || []).map(d => ({
-    date: d.date,
-    weight: d.weight ? Number(d.weight) : null,
-    hunger: d.hunger,
-    energy: d.energy,
-    coffee: d.coffee,
-    protein: d.protein,
-    activity: d.activity,
-    water: (d as any).water ?? 0,
-    sleepHours: (d as any).sleepHours ?? 0,
-    sleepQuality: (d as any).sleepQuality ?? 3,
+  return (data || []).map(d => normalizeEntry({
+    date: d.date, weight: d.weight == null ? null : Number(d.weight),
+    hunger: d.hunger, energy: d.energy, coffee: d.coffee, protein: d.protein, activity: d.activity,
+    water: d.water ?? null, sleepHours: d.sleep_hours ?? null, sleepQuality: d.sleep_quality ?? null,
+    schemaVersion: d.schema_version === 2 ? 2 : undefined, legacy: d.legacy ?? d.schema_version !== 2,
   }));
 }
 
-export async function saveCloudEntry(entry: DailyEntry) {
+export async function saveCloudEntry(raw: DailyEntry) {
+  const entry = normalizeEntry(raw);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase.from('daily_entries').upsert({
+  const { error } = await supabase.from('daily_entries').upsert({
     user_id: user.id,
     date: entry.date,
     weight: entry.weight,
@@ -75,7 +71,10 @@ export async function saveCloudEntry(entry: DailyEntry) {
     coffee: entry.coffee,
     protein: entry.protein,
     activity: entry.activity,
+    water: entry.water, sleep_hours: entry.sleepHours, sleep_quality: entry.sleepQuality,
+    schema_version: 2, legacy: entry.legacy ?? false,
   }, { onConflict: 'user_id,date' });
+  if (error) throw error;
 }
 
 // ── Food ──

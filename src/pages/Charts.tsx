@@ -28,7 +28,7 @@ export default function Charts() {
           targetWeight={targetWeight}
           targetDate={targetDate}
           forecastDate={forecastDate}
-          currentWeight={weightEntries[weightEntries.length - 1]?.weight || profile.weight}
+          currentWeight={weightEntries[weightEntries.length - 1]?.weight ?? profile.weight}
         />
       )}
       {targetWeight && weightEntries.length >= 1 && !canAccess('weightForecast') && (
@@ -58,8 +58,8 @@ function getLast7DaysData(entries: DailyEntry[]) {
     return {
       date: date.slice(5),
       weight: e?.weight ?? null,
-      hunger: e?.hunger || null,
-      energy: e?.energy || null,
+      hunger: e?.hunger ?? null,
+      energy: e?.energy ?? null,
     };
   });
 }

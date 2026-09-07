@@ -93,29 +93,30 @@ export default function HistoryDiary() {
             </div>
 
             <div className="p-4 space-y-3">
+              {entry?.legacy && <p className="text-xs">Старая запись: значения могли быть заданы по умолчанию.</p>}
               {/* Quick stats row */}
               {entry && (
                 <div className="flex flex-wrap gap-2">
-                  {entry.weight && (
+                  {entry.weight != null && (
                     <StatChip icon="⚖️" value={`${entry.weight} кг`} />
                   )}
-                  {(entry.water ?? 0) > 0 && (
+                  {entry.water != null && (
                     <StatChip icon="💧" value={`${((entry.water || 0) * 0.25).toFixed(1)} л`} />
                   )}
-                  {(entry.sleepHours ?? 0) > 0 && (
+                  {entry.sleepHours != null && (
                     <StatChip icon="😴" value={`${entry.sleepHours} ч`} />
                   )}
-                  {(entry.activity ?? 0) > 0 && (
+                  {entry.activity != null && (
                     <StatChip icon="🏃" value={`${entry.activity} мин`} />
                   )}
-                  {(entry.coffee ?? 0) > 0 && (
+                  {entry.coffee != null && (
                     <StatChip icon="☕" value={`${entry.coffee}`} />
                   )}
-                  {entry.protein && (
-                    <StatChip icon="🥩" value="Белок ✓" />
+                  {entry.protein != null && (
+                    <StatChip icon="🥩" value={entry.protein ? "Белок: Да" : "Белок: Нет"} />
                   )}
-                  <StatChip icon={entry.hunger >= 4 ? '😫' : entry.hunger <= 2 ? '😊' : '😐'} value={`Голод ${entry.hunger}/5`} />
-                  <StatChip icon={entry.energy >= 4 ? '⚡' : entry.energy <= 2 ? '😴' : '🔋'} value={`Энергия ${entry.energy}/5`} />
+                  <StatChip icon={entry.hunger >= 4 ? '😫' : entry.hunger <= 2 ? '😊' : '😐'} value={`Голод ${entry.hunger ?? "—"}/5`} />
+                  <StatChip icon={entry.energy >= 4 ? '⚡' : entry.energy <= 2 ? '😴' : '🔋'} value={`Энергия ${entry.energy ?? "—"}/5`} />
                 </div>
               )}
 

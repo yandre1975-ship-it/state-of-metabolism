@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Loader2, AlertCircle, Brain, Salad, Dumbbell, Shield, ClipboardList, Mic, MicOff, Volume2, VolumeX, UtensilsCrossed, Settings2, Square } from 'lucide-react';
-import { getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, calcMacroTargets, type FoodItem } from '@/lib/storage';
+import { assessDay, getTodayEntry, getProfile, getStatus, getTodayFood, saveDailyFood, calcMacroTargets, type FoodItem } from '@/lib/storage';
 import ReactMarkdown from 'react-markdown';
 
 type AgentRole = 'coach' | 'nutrition' | 'training' | 'risk' | 'reminder';
@@ -52,7 +52,7 @@ const QUICK_QUESTIONS: { text: string; agent?: AgentRole }[] = [
   { text: 'Как я сегодня?', agent: 'coach' },
 ];
 
-function getContext() {
+export function getContext() {
   const entry = getTodayEntry();
   const profile = getProfile();
   const food = getTodayFood();
@@ -63,7 +63,11 @@ function getContext() {
   );
   const meals = food.items.map(i => `${i.name} (${i.calories} ккал, Б${i.protein})`).join('; ');
   return {
-    weight: entry.weight || profile.weight,
+    weight: entry.weight,
+    profileWeight: profile.weight,
+    legacyDailyValues: entry.legacy ?? false,
+    assessment: assessDay(entry),
+    foodLogComplete: false,
     hunger: entry.hunger,
     energy: entry.energy,
     coffee: entry.coffee,
@@ -79,22 +83,22 @@ function getContext() {
     targetWeight: profile.targetWeight,
     sleepHours: entry.sleepHours,
     sleepQuality: entry.sleepQuality,
-    waterLiters: ((entry.water || 0) * 250 / 1000).toFixed(1),
-    waterGlasses: entry.water || 0,
-    foodCalories: foodTotals.cal,
-    foodProtein: Math.round(foodTotals.p),
-    foodCarbs: Math.round(foodTotals.c),
-    foodFat: Math.round(foodTotals.f),
+    waterLiters: entry.water == null ? null : (entry.water * 0.25).toFixed(1),
+    waterGlasses: entry.water,
+    foodCalories: food.items.length ? foodTotals.cal : null,
+    foodProtein: food.items.length ? Math.round(foodTotals.p) : null,
+    foodCarbs: food.items.length ? Math.round(foodTotals.c) : null,
+    foodFat: food.items.length ? Math.round(foodTotals.f) : null,
     mealsEaten: meals || 'ничего не записано',
     mealsCount: food.items.length,
     targetCalories: targets.calories,
     targetProtein: targets.protein,
     targetCarbs: targets.carbs,
     targetFat: targets.fat,
-    remainingCalories: targets.calories - foodTotals.cal,
-    remainingProtein: Math.round(targets.protein - foodTotals.p),
-    remainingCarbs: Math.round(targets.carbs - foodTotals.c),
-    remainingFat: Math.round(targets.fat - foodTotals.f),
+    remainingCalories: food.items.length ? targets.calories - foodTotals.cal : null,
+    remainingProtein: food.items.length ? Math.round(targets.protein - foodTotals.p) : null,
+    remainingCarbs: food.items.length ? Math.round(targets.carbs - foodTotals.c) : null,
+    remainingFat: food.items.length ? Math.round(targets.fat - foodTotals.f) : null,
   };
 }
 
@@ -112,49 +116,10 @@ function buildProactivePrompt(): string {
   else if (hour < 19) parts.push('Сейчас вторая половина дня.');
   else parts.push('Сейчас вечер.');
 
-  if (status === 'red') {
-    if (entry.hunger >= 4) {
-      parts.push('У пользователя высокий голод (4-5/5). Это риск переедания. Начни разговор с этого.');
-    } else if (entry.energy <= 2) {
-      parts.push('У пользователя очень низкая энергия. Начни с поддержки.');
-    }
-  } else if (status === 'yellow') {
-    parts.push('Состояние пограничное. Дай 1-2 конкретных совета.');
-  } else {
-    parts.push('Показатели хорошие. Похвали и дай один совет.');
-  }
-
-  if (!entry.protein && hour > 10) parts.push('Белок ещё не отмечен.');
-  if (entry.activity < 20 && hour > 14) parts.push('Активность пока низкая.');
-  if (entry.coffee > 2) parts.push('Много кофе.');
-  if ((entry.sleepHours || 0) > 0 && entry.sleepHours < 6) parts.push('Мало сна — упомяни важность восстановления.');
-
-  // Macro alerts based on time of day
-  const calPct = ctx.targetCalories ? Math.round((ctx.foodCalories / ctx.targetCalories) * 100) : 0;
-  const protPct = ctx.targetProtein ? Math.round((ctx.foodProtein / ctx.targetProtein) * 100) : 0;
-
-  if (hour >= 15) {
-    // Afternoon/evening: check if eating too little
-    if (calPct < 40 && hour >= 15) {
-      parts.push(`ВНИМАНИЕ: к ${hour}:00 съедено всего ${calPct}% калорий (${ctx.foodCalories} из ${ctx.targetCalories} ккал). Это слишком мало — предупреди о риске срыва вечером и предложи что съесть.`);
-    }
-    if (protPct < 30 && hour >= 15) {
-      parts.push(`ВНИМАНИЕ: белка съедено только ${protPct}% (${ctx.foodProtein}г из ${ctx.targetProtein}г). Настоятельно рекомендуй добавить белковую пищу.`);
-    }
-    if (calPct > 90 && hour < 19) {
-      parts.push(`ВНИМАНИЕ: уже съедено ${calPct}% калорий (${ctx.foodCalories} из ${ctx.targetCalories} ккал), а впереди ещё ужин. Предупреди о переборе и предложи лёгкий ужин.`);
-    }
-  }
-  if (hour >= 19) {
-    if (calPct > 100) {
-      parts.push(`ПЕРЕБОР: съедено ${ctx.foodCalories} ккал из ${ctx.targetCalories} (${calPct}%). Предупреди мягко, но чётко. Предложи лёгкую прогулку.`);
-    }
-    if (calPct < 60) {
-      parts.push(`НЕДОБОР: к вечеру съедено только ${calPct}% нормы. Нельзя голодать — это замедлит метаболизм. Предложи полноценный ужин.`);
-    }
-  }
-
-  parts.push(`Обратись по имени (${profile.name || 'друг'}). Будь кратким (2-4 предложения). Обязательно укажи остаток: ${ctx.remainingCalories} ккал, Б${ctx.remainingProtein}г. Задай вопрос.`);
+  const assessment = assessDay(entry);
+  parts.push(`Наблюдения дневника: ${assessment.message}. ${assessment.actions.join(' ')}`);
+  parts.push('Не делай медицинских выводов по шкалам. null — не записано, не ноль. Старые значения могут быть значениями по умолчанию. Дневник еды может быть неполным: суммы относятся только к записям, не ко всему съеденному. Не объявляй недобор, перебор или пропущенный приём пищи по отсутствию записей.');
+  parts.push(`Обратись по имени (${profile.name || 'друг'}). Ответь кратко и задай уточняющий вопрос.`);
 
   return parts.join(' ');
 }

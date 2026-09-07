@@ -1,14 +1,16 @@
 export interface DailyEntry {
   date: string; // YYYY-MM-DD
   weight: number | null;
-  hunger: number;
-  energy: number;
-  coffee: number;
-  protein: boolean;
-  activity: number;
-  water: number; // glasses of water (250ml each)
-  sleepHours: number; // hours of sleep
-  sleepQuality: number; // 1-5
+  hunger: number | null;
+  energy: number | null;
+  coffee: number | null;
+  protein: boolean | null;
+  schemaVersion?: 2;
+  legacy?: boolean;
+  activity: number | null;
+  water: number | null; // glasses of water (250ml each)
+  sleepHours: number | null; // hours of sleep
+  sleepQuality: number | null; // 1-5
 }
 
 export type HealthCondition = 'insulin_resistance' | 'hypothyroid' | 'pcos' | 'high_cortisol';
@@ -115,23 +117,37 @@ export function getToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function emptyEntry(date: string): DailyEntry {
+  return { date, schemaVersion: 2, weight: null, hunger: null, energy: null, coffee: null,
+    protein: null, activity: null, water: null, sleepHours: null, sleepQuality: null };
+}
+
+// Legacy defaults cannot be distinguished from intentional input. Preserve, flag, never rewrite on read.
+export function normalizeEntry(raw: Partial<DailyEntry> & { date: string }): DailyEntry {
+  const result = { ...emptyEntry(raw.date), ...raw, schemaVersion: 2 as const, legacy: raw.legacy ?? raw.schemaVersion !== 2 };
+  for (const key of ['weight', 'hunger', 'energy', 'coffee', 'activity', 'water', 'sleepHours', 'sleepQuality'] as const) {
+    result[key] = typeof raw[key] === 'number' && Number.isFinite(raw[key]) ? raw[key]! : null;
+  }
+  result.protein = typeof raw.protein === 'boolean' ? raw.protein : null;
+  return result;
+}
+
 export function getEntries(): DailyEntry[] {
   try {
-    return JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
+    const raw = JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]');
+    return Array.isArray(raw) ? raw.map(normalizeEntry) : [];
   } catch { return []; }
 }
 
 export function getTodayEntry(): DailyEntry {
   const today = getToday();
   const entries = getEntries();
-  return entries.find(e => e.date === today) || {
-    date: today, weight: null, hunger: 2, energy: 3, coffee: 0, protein: false, activity: 0, water: 0, sleepHours: 0, sleepQuality: 3,
-  };
+  return entries.find(e => e.date === today) || emptyEntry(today);
 }
 
 export function saveEntry(entry: DailyEntry) {
   const entries = getEntries().filter(e => e.date !== entry.date);
-  entries.push(entry);
+  entries.push(normalizeEntry(entry));
   entries.sort((a, b) => a.date.localeCompare(b.date));
   localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
 }
@@ -144,9 +160,7 @@ export function getLast7Days(): DailyEntry[] {
     d.setDate(d.getDate() - i);
     dates.push(d.toISOString().slice(0, 10));
   }
-  return dates.map(date => entries.find(e => e.date === date) || {
-    date, weight: null, hunger: 0, energy: 0, coffee: 0, protein: false, activity: 0, water: 0, sleepHours: 0, sleepQuality: 3,
-  });
+  return dates.map(date => entries.find(e => e.date === date) || emptyEntry(date));
 }
 
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
@@ -171,25 +185,38 @@ export function saveChecklist(items: ChecklistItem[]) {
   localStorage.setItem(CHECKLIST_KEY, JSON.stringify(items));
 }
 
-export type Status = 'green' | 'yellow' | 'red';
+export type Status = 'green' | 'yellow' | 'red' | 'unknown';
+
+/** Diary observations, not a medical assessment. One policy for all daily surfaces. */
+export function assessDay(entry: DailyEntry): { status: Status; message: string; actions: string[] } {
+  const actions: string[] = [];
+  const lowEnergy = entry.energy != null && entry.energy <= 2;
+  const shortSleep = entry.sleepHours != null && entry.sleepHours < 6;
+  const highHunger = entry.hunger != null && entry.hunger >= 4;
+  if (lowEnergy) actions.push('Вы отметили низкую энергию. Выберите отдых; при стойкой или выраженной слабости обратитесь к врачу.');
+  if (shortSleep) actions.push('Записано менее 6 часов сна. По возможности выделите время для отдыха.');
+  if (highHunger) actions.push('Вы отметили сильный голод. Подумайте о полноценном приёме пищи с белком и клетчаткой.');
+  if (entry.protein === false) actions.push('Вы отметили отсутствие белка. Можно добавить подходящий вам источник белка в следующий приём пищи.');
+  if (entry.coffee != null && entry.coffee > 2) actions.push('Записано больше двух чашек кофе. Обратите внимание на порции, содержание кофеина и качество сна.');
+  if (entry.activity != null && entry.activity < 20 && !lowEnergy && !shortSleep) actions.push('Если самочувствие позволяет, можно выбрать короткую прогулку в удобном темпе.');
+  if (entry.sleepQuality != null && entry.sleepQuality <= 2) actions.push('Вы невысоко оценили качество сна. Обратите внимание на условия для отдыха.');
+  const missing = ['hunger', 'energy', 'coffee', 'protein', 'activity', 'water', 'sleepHours', 'sleepQuality'].some(k => entry[k as keyof DailyEntry] == null);
+  const attention = lowEnergy || shortSleep || highHunger;
+  const status: Status = attention ? 'red' : missing || entry.legacy ? 'unknown' : actions.length ? 'yellow' : 'green';
+  const message = attention ? 'Самочувствие требует внимания' : missing || entry.legacy ? 'Недостаточно подтверждённых данных' : actions.length ? 'Есть наблюдения в дневнике' : 'Записи за день заполнены';
+  if (missing) actions.push('Заполните недостающие данные. Отсутствие записи не означает ноль.');
+  if (entry.legacy) actions.push('Старые значения сохранены, но могли быть значениями по умолчанию. Проверьте их в дневнике.');
+  if (!actions.length) actions.push('Продолжайте наблюдать за самочувствием. Записи не определяют состояние обмена веществ.');
+  return { status, message, actions };
+}
 
 export function getStatus(entry: DailyEntry): { status: Status; message: string } {
-  if (entry.hunger >= 4) return { status: 'red', message: 'Риск переедания' };
-  if (entry.energy <= 2) return { status: 'red', message: 'Низкая энергия / стресс' };
-  if (entry.hunger <= 3 && entry.energy >= 3 && entry.coffee <= 2 && entry.protein)
-    return { status: 'green', message: 'Жиросжигание активно' };
-  return { status: 'yellow', message: 'Пограничное состояние' };
+  const { status, message } = assessDay(entry);
+  return { status, message };
 }
 
 export function getInsights(entry: DailyEntry): string[] {
-  const tips: string[] = [];
-  if (entry.hunger >= 4) tips.push('Высокий голод увеличивает риск срыва. Попробуйте добавить белок и клетчатку.');
-  if (entry.energy <= 2) tips.push('Низкая энергия может говорить о стрессе или недосыпе. Приоритет — восстановление.');
-  if (!entry.protein) tips.push('Белок в каждом приёме пищи помогает контролировать аппетит.');
-  if (entry.coffee > 2) tips.push('Избыток кофе повышает кортизол. Попробуйте снизить до 1–2 чашек.');
-  if (entry.activity < 20) tips.push('Даже 20 минут ходьбы значительно улучшают метаболизм.');
-  if (tips.length === 0) tips.push('Отличные показатели! Продолжайте в том же духе.');
-  return tips;
+  return assessDay(entry).actions;
 }
 
 // ── Food diary ──

@@ -156,7 +156,7 @@ export default function NotificationSettingsComponent() {
             </div>
             <div>
               <span className="font-semibold text-sm">Telegram бот</span>
-              <p className="text-[10px] text-muted-foreground">Итоги дня и напоминания</p>
+              <p className="text-[10px] text-muted-foreground">Итоги, напоминания и запись в дневник</p>
             </div>
           </div>
           {telegramConnected && (

@@ -16,38 +16,56 @@ export type Database = {
     Tables: {
       daily_entries: {
         Row: {
-          activity: number
-          coffee: number
+          water: number | null
+          sleep_hours: number | null
+          sleep_quality: number | null
+          schema_version: number
+          legacy: boolean
+
+          activity: number | null
+          coffee: number | null
           created_at: string
           date: string
-          energy: number
-          hunger: number
+          energy: number | null
+          hunger: number | null
           id: string
-          protein: boolean
+          protein: boolean | null
           user_id: string
           weight: number | null
         }
         Insert: {
-          activity?: number
-          coffee?: number
+          water?: number | null
+          sleep_hours?: number | null
+          sleep_quality?: number | null
+          schema_version?: number
+          legacy?: boolean
+
+          activity?: number | null
+          coffee?: number | null
           created_at?: string
           date: string
-          energy?: number
-          hunger?: number
+          energy?: number | null
+          hunger?: number | null
           id?: string
-          protein?: boolean
+          protein?: boolean | null
           user_id: string
           weight?: number | null
         }
         Update: {
-          activity?: number
-          coffee?: number
+          water?: number | null
+          sleep_hours?: number | null
+          sleep_quality?: number | null
+          schema_version?: number
+          legacy?: boolean
+
+          activity?: number | null
+          coffee?: number | null
           created_at?: string
           date?: string
-          energy?: number
-          hunger?: number
+          energy?: number | null
+          hunger?: number | null
           id?: string
-          protein?: boolean
+          protein?: boolean | null
           user_id?: string
           weight?: number | null
         }
